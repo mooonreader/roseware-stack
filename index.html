@@ -536,21 +536,24 @@ scroller.innerHTML=LABEL.map((l,c)=>`<i class="snap" style="top:${c*PER*100}vh">
 const maxScroll=()=>Math.max(1,document.documentElement.scrollHeight-innerHeight);
 let ANCH=[];const measure=()=>{const mx=maxScroll();ANCH=$$('#scroller .snap').map(e=>Math.min(e.offsetTop,mx))};
 const progU=()=>{const y=scrollY;if(ANCH.length<N)measure();if(y<=ANCH[0])return 0;for(let c=0;c<N-1;c++){if(y<ANCH[c+1]){const s=ANCH[c+1]-ANCH[c];return c+(s>0?clamp((y-ANCH[c])/s):0)}}return N-1};
-let curC=0,navT=0,stableC=0,pAnim=0,pLock=0,wAcc=0,wLast=0,settleT=0;
+let curC=0,navT=0,stableC=0,pAnim=0,pLock=0,wAcc=0,wLast=0,settleT=0,gId=0,gTrig=-1,lastDy=0,decN=0,lastTrigT=0,wTrigP=-1e9;
 const tween=y1=>{cancelAnimationFrame(pAnim);pAnim=0;const y0=scrollY,d=y1-y0;const now=performance.now();if(Math.abs(d)<1){pLock=now+200;return}
- if(RM){window.scrollTo(0,y1);pLock=now+250;return}const ch=Math.abs(d)/Math.max(1,innerHeight*PER),T=Math.min(2600,1650+Math.max(0,ch-1)*260+Math.min(1,ch)*250);pLock=now+T+200;
- const st=n=>{const k=Math.min(1,(n-now)/T),e=k*k*k*(k*(k*6-15)+10);window.scrollTo(0,y0+d*e);pAnim=k<1?requestAnimationFrame(st):0};pAnim=requestAnimationFrame(st)};
+ if(RM){window.scrollTo(0,y1);pLock=now+250;return}const ch=Math.abs(d)/Math.max(1,innerHeight*PER),T=Math.min(2400,1350+Math.max(0,ch-1)*240+Math.min(1,ch)*250);pLock=now+T+120;
+ const st=n=>{const k=Math.min(1,(n-now)/T),e=.28*k*k*(3-2*k)+.72*(1-Math.pow(1-k,4));window.scrollTo(0,y0+d*e);pAnim=k<1?requestAnimationFrame(st):0};pAnim=requestAnimationFrame(st)};
 const curNav=()=>pAnim?navT:Math.round(progU());
 const go=c=>{c=clamp(Math.round(c),0,N-1);navT=c;measure();tween(ANCH[c]||0)};
 /* paging: one gesture, one chapter */
 addEventListener('wheel',e=>{if(e.ctrlKey)return;const t=e.target;if(t&&t.closest&&t.closest('select,textarea,input'))return;e.preventDefault();
- const now=performance.now(),dy=e.deltaMode===1?e.deltaY*16:e.deltaMode===2?e.deltaY*innerHeight:e.deltaY;if(Math.abs(dy)<Math.abs(e.deltaX))return;
- if(now-wLast>420)wAcc=0;wLast=now;if(pAnim||now<pLock){pLock=Math.max(pLock,now+170);return}
- wAcc+=dy;if(Math.abs(wAcc)>=12){const d=wAcc>0?1:-1;wAcc=0;go(curNav()+d)}},{passive:false});
+ const now=e.timeStamp||performance.now(),dy=e.deltaMode===1?e.deltaY*16:e.deltaMode===2?e.deltaY*innerHeight:e.deltaY;if(Math.abs(dy)<Math.abs(e.deltaX))return;
+ /* one gesture = one chapter; a fresh gesture is accepted at once, even mid-glide, while trackpad inertia tails are ignored */
+ const gap=now-wLast,ady=Math.abs(dy);
+ if(gap>650||(gap>180&&ady>=lastDy&&ady>=4)||(decN>=3&&ady>lastDy*1.8&&ady>8)){gId++;wAcc=0;decN=0}else if(ady<lastDy)decN++;else if(ady>lastDy)decN=0;
+ lastDy=ady;wLast=now;if(gTrig===gId)return;
+ wAcc+=dy;if(Math.abs(wAcc)>=12&&now-lastTrigT>220){const d=wAcc>0?1:-1;wAcc=0;gTrig=gId;lastTrigT=now;wTrigP=performance.now();go(curNav()+d)}},{passive:false});
 let tch=null;
 addEventListener('touchstart',e=>{if(e.touches.length!==1){tch=null;return}const t=e.touches[0];tch={x:t.clientX,y:t.clientY,done:false,el:e.target}},{passive:true});
 addEventListener('touchmove',e=>{if(!tch||e.touches.length!==1)return;const t=e.touches[0],dx=t.clientX-tch.x,dy=t.clientY-tch.y;if(tch.el&&tch.el.closest&&tch.el.closest('select'))return;
- if(Math.abs(dy)>Math.abs(dx)*1.1){if(e.cancelable)e.preventDefault();if(!tch.done&&Math.abs(dy)>40&&!pAnim&&performance.now()>pLock-200){tch.done=true;go(curNav()+(dy<0?1:-1))}}},{passive:false});
+ if(Math.abs(dy)>Math.abs(dx)*1.1){if(e.cancelable)e.preventDefault();if(!tch.done&&Math.abs(dy)>26&&performance.now()-wTrigP>300){tch.done=true;wTrigP=performance.now();go(curNav()+(dy<0?1:-1))}}},{passive:false});
 addEventListener('touchend',()=>{tch=null},{passive:true});addEventListener('touchcancel',()=>{tch=null},{passive:true});
 addEventListener('scroll',()=>{if(pAnim)return;clearTimeout(settleT);settleT=setTimeout(()=>{if(pAnim||tch)return;const u=progU(),r=Math.round(u);if(Math.abs(u-r)>.003)go(r);else stableC=r},220)},{passive:true});
 document.addEventListener('click',e=>{const a=e.target.closest('[data-go]');if(a){e.preventDefault();go(+a.dataset.go)}});
@@ -1067,7 +1070,7 @@ const ss=x=>x*x*(3-2*x);
 exTap=()=>{if(Math.abs(curU-12)>.5)return;const h=ray.intersectObjects(hits,false);if(h.length)pickAtoll(h[0].object.userData.k)};
 const loop=now=>{requestAnimationFrame(loop);const rdt=Math.min((now-last)/1000,.25),dt=Math.min(rdt,.05);last=now;const t=uT.value+=dt;
  if(started&&introT<1)introT=Math.min(1,introT+rdt/2.8);
- const p=progU()/(N-1);sp=Math.abs(p-sp)<1e-5?p:damp(sp,p,RM?30:3.6,rdt);perfTick(rdt);
+ const p=progU()/(N-1);sp=Math.abs(p-sp)<1e-5?p:damp(sp,p,RM?30:6.5,rdt);perfTick(rdt);
  const u=sp*(N-1),i=Math.min(Math.floor(u),N-2),e=dw(u-i),uu=i+e,W=innerWidth,H=innerHeight;
  let sx=0,sy=0,fade=0;const ocean=uu>=7.5;
  if(ocean!==(mode===1)){mode=ocean?1:0;document.body.classList.toggle('ocean',ocean);rp.scene=ocean?oScene:scene;camera.far=ocean?2600:500;bloom.threshold=ocean?.9:.92;bloom.strength=mobile?.55:.62;renderer.toneMappingExposure=1.05;hoverL=-1;exHover=-1;canvas.style.cursor='';if(!ocean)hideTags()}
