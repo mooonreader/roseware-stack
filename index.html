@@ -125,6 +125,10 @@ a{color:inherit}
 @keyframes wheel{0%{opacity:0;transform:translateY(-2px)}30%{opacity:1}100%{opacity:0;transform:translateY(12px)}}
 :focus-visible{outline:2.5px solid #ff7a70;outline-offset:3px;border-radius:10px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.osmattr{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(30px + env(safe-area-inset-bottom));z-index:21;font-size:11px;color:#a59a9b;opacity:0;visibility:hidden;transition:opacity .6s,visibility 0s .6s}
+.osmattr a{color:inherit}
+body.ocean .osmattr{opacity:1;visibility:visible;transition:opacity .6s}
+@media(max-width:760px){.osmattr{top:90px;bottom:auto;right:14px;font-size:10px}}
 #lost{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(7,3,4,.86);text-align:center;padding:24px}
 #lost.show{display:flex}
 /* phones */
@@ -273,6 +277,7 @@ a{color:inherit}
 </section>
 </main>
 
+<div class="osmattr">Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></div>
 <div id="tags"></div>
 <div id="scroller"></div>
 <div id="lost" role="alert"><p>The 3D view was paused by your device.</p><button class="btn" onclick="location.reload()">Reload</button></div>
@@ -911,7 +916,7 @@ const loop=now=>{requestAnimationFrame(loop);const rdt=Math.min((now-last)/1000,
  const p=progU()/(N-1);sp=Math.abs(p-sp)<1e-5?p:damp(sp,p,RM?30:6.5,rdt);perfTick(rdt);
  const u=sp*(N-1),i=Math.min(Math.floor(u),N-2),e=dw(u-i),uu=i+e,W=innerWidth,H=innerHeight;
  let sx=0,sy=0,fade=0;const ocean=uu>=7.5;
- if(ocean!==(mode===1)){mode=ocean?1:0;rp.scene=ocean?oScene:scene;camera.far=ocean?2600:500;bloom.threshold=ocean?.9:.92;hoverL=-1;exHover=-1;canvas.style.cursor='';if(!ocean)hideTags()}
+ if(ocean!==(mode===1)){mode=ocean?1:0;document.body.classList.toggle('ocean',ocean);rp.scene=ocean?oScene:scene;camera.far=ocean?2600:500;bloom.threshold=ocean?.9:.92;hoverL=-1;exHover=-1;canvas.style.cursor='';if(!ocean)hideTags()}
  if(!ocean){
   const us=Math.min(uu,7),si=Math.min(Math.floor(us),6),se=us-si,A=KF[si],B=KF[si+1];
   posC.getPoint(us/7,camP);tgtC.getPoint(us/7,camT);
