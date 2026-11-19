@@ -1,0 +1,61 @@
+{
+ "attribution": "Contains modified Copernicus Sentinel data (2023-2026), processed via Earth Search / AWS Open Data",
+ "patches": {
+  "male": {
+   "bbox": [
+    73.395,
+    4.105,
+    73.6,
+    4.3
+   ],
+   "size": [
+    2050,
+    1950
+   ],
+   "scenes": 9,
+   "coverage": 1.0
+  },
+  "kulhu": {
+   "bbox": [
+    72.995,
+    6.565,
+    73.135,
+    6.69
+   ],
+   "size": [
+    1400,
+    1250
+   ],
+   "scenes": 9,
+   "coverage": 1.0
+  },
+  "fuva": {
+   "bbox": [
+    73.385,
+    -0.35,
+    73.475,
+    -0.25
+   ],
+   "size": [
+    900,
+    1000
+   ],
+   "scenes": 9,
+   "coverage": 0.998
+  },
+  "addu": {
+   "bbox": [
+    73.06,
+    -0.735,
+    73.26,
+    -0.565
+   ],
+   "size": [
+    1333,
+    1133
+   ],
+   "scenes": 9,
+   "coverage": 0.999
+  }
+ }
+}
