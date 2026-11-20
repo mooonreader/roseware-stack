@@ -200,7 +200,7 @@ setInterval(() => { U.uHit.value.w *= .9; }, 100);
 let dpr = Q.dpr; const resize = () => { const w = innerWidth, h = innerHeight; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setPixelRatio(dpr); renderer.setSize(w, h, false); composer.setPixelRatio(dpr); composer.setSize(w, h); grade.uniforms.uAsp.value = w / h;
   if (water.getRenderTarget) water.getRenderTarget().setSize(Math.round(w * Q.refl * Math.min(dpr, 1.5)), Math.round(h * Q.refl * Math.min(dpr, 1.5))); document.body.classList.toggle('narrow', w < 760); };
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 300));
-let ft = 0, fn = 0, slowT = 0, fastT = 0; const perf = dt => { ft += dt; fn++; if (fn < 30) return; const a = ft / fn; ft = 0; fn = 0;
+let ft = 0, fn = 0, slowT = 0, fastT = 0; const perf = dt => { if (document.hidden || dt > .2) { ft = 0; fn = 0; return; } ft += dt; fn++; if (fn < 30) return; const a = ft / fn; ft = 0; fn = 0;
   if (a > 1 / 40) { slowT++; fastT = 0; if (slowT > 1 && dpr > .75) { dpr = Math.max(.75, dpr - .15); resize(); slowT = 0; } } else if (a < 1 / 57) { fastT++; slowT = 0; if (fastT > 4 && dpr < Q.dpr) { dpr = Math.min(Q.dpr, dpr + .1); resize(); fastT = 0; } } else { slowT = fastT = 0; } };
 canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); document.body.classList.add('lost'); });
 
@@ -214,7 +214,7 @@ const clock = new THREE.Clock(); let t = 0, revealT = -1, last = performance.now
 const slabOut = [0, 0, 0, 0, 0], seamI = [1.2, 1.2, 1.2, 1.2, 1.2, 1.2];
 const shadowFocus = V(0, 0, 0), sR = V(), sU = V(), UP = V(0, 1, 0);
 const frame = now => {
-  requestAnimationFrame(frame); const dtR = Math.min(.25, Math.max(0, (now - last) / 1000)), dt = Math.min(.05, dtR); last = now; t += dt; U.uT.value = t; grade.uniforms.uT.value = t; perf(dt);
+  requestAnimationFrame(frame); const raw = Math.max(0, (now - last) / 1000), dtR = Math.min(.25, raw), dt = Math.min(.05, dtR); last = now; t += dt; U.uT.value = t; grade.uniforms.uT.value = t; perf(raw);
   { let rem = dtR; while (rem > 1e-4) { const h = Math.min(rem, 1 / 60); scrollUpdate(h, now); rem -= h; } }
   /* camera */
   const tt = tAt(P); posC.getPoint(tt, camP); tgtC.getPoint(tt, camT); const portrait = clamp((1.05 - camera.aspect) / .4); if (portrait > 0) { tgtM.getPoint(tt, camTM); camT.lerp(camTM, portrait); }
@@ -266,4 +266,4 @@ fetch('assets/index.json').then(r => r.json()).then(j => { SKYMETA = j; return l
   resize(); requestAnimationFrame(frame);
 }).catch(e => { console.error(e); fail('The scene could not load. Please refresh.'); });
 const cp = new URLSearchParams(location.search).get('c'); if (cp) { P = PT_ = clamp(+cp, 0, N - 1); }
-window.__dbg = { get P() { return P; }, jump, U, camera, scene, renderer };
+window.__dbg = { get P() { return P; }, jump, U, camera, scene, renderer, composer };
