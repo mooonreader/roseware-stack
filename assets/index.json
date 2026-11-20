@@ -1,0 +1,142 @@
+{
+ "credits": "Skies and textures: Poly Haven (polyhaven.com), CC0",
+ "sky": {
+  "day": {
+   "id": "kloofendal_48d_partly_cloudy_puresky",
+   "author": "Greg Zaal,Jarod Guest",
+   "sun_px": [
+    2437,
+    479
+   ],
+   "size": [
+    4096,
+    2048
+   ],
+   "exposure": 0.5225704578778966,
+   "median": 0.3444511592388153,
+   "peak": 32144.033203125
+  },
+  "golden": {
+   "id": "belfast_sunset_puresky",
+   "author": "Greg Zaal,Dimitrios Savva,Jarod Guest",
+   "sun_px": [
+    2460,
+    995
+   ],
+   "size": [
+    4096,
+    2048
+   ],
+   "exposure": 0.19369971728515495,
+   "median": 0.9292734265327454,
+   "peak": 24.238849639892578
+  },
+  "night": {
+   "id": "qwantani_night_puresky",
+   "author": "Greg Zaal,Jarod Guest",
+   "sun_px": [
+    3206,
+    66
+   ],
+   "size": [
+    4096,
+    2048
+   ],
+   "exposure": 0.37914193540611224,
+   "median": 0.47475624084472656,
+   "peak": 28.973081588745117
+  }
+ },
+ "tex": {
+  "plaster": {
+   "id": "white_plaster_02",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  },
+  "coral": {
+   "id": "coral_fort_wall_01",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  },
+  "wood": {
+   "id": "weathered_planks",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  },
+  "sand": {
+   "id": "coast_sand_01",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  },
+  "concrete": {
+   "id": "concrete_floor_worn_001",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  },
+  "metal": {
+   "id": "metal_plate",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  },
+  "marble": {
+   "id": "marble_01",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  },
+  "grass": {
+   "id": "aerial_grass_rock",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  },
+  "stone": {
+   "id": "rock_boulder_dry",
+   "maps": [
+    "ao",
+    "arm",
+    "diff",
+    "nor",
+    "rough"
+   ]
+  }
+ }
+}
