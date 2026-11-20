@@ -1,0 +1,86 @@
+/* All copy is RoseWare's own, carried over from the existing site. */
+export const PROJECTS = {
+  male: { place: 'Malé', atoll: 'Kaafu', items: [
+    { name: 'Fenaka Corporation Limited', year: 2025, scope: 'Design, Supply, Installation, Configuration, and Migration', tags: ['Network Infrastructure', 'Threat Protection', 'Server, Storage and Business Continuity'] },
+    { name: 'Maldives Inland Revenue Authority', year: 2021, scope: 'Design, Supply, Installation, Configuration, and Migration', tags: ['Cybersecurity Advisory', 'Threat Protection'] } ] },
+  kv: { place: 'Kuda Villingili', atoll: 'Kaafu', items: [
+    { name: 'Kudavillingili Resorts Maldives', year: 2021, scope: 'Design, Supply, Installation & Configuration', tags: ['Network Infrastructure', 'Unified Communications', 'Threat Protection', 'Server, Storage and Business Continuity', 'Desktop and Server Virtualization'] } ] },
+  kh: { place: 'Kulhudhuffushi', atoll: 'Haa Dhaalu', items: [
+    { name: 'Kulhudhuffushi Regional Hospital', year: 2025, scope: 'Design, Supply, Installation, Configuration, and Migration', tags: ['Network Infrastructure', 'Threat Protection', 'Server, Storage and Business Continuity', 'Desktop and Server Virtualization'] } ] },
+};
+
+export const LAYERS = [
+  { key: 'power', name: 'Data Centre Power & Cooling' },
+  { key: 'servers', name: 'Servers, Storage & Business Continuity' },
+  { key: 'virt', name: 'Desktop & Server Virtualization' },
+  { key: 'network', name: 'Network Infrastructure' },
+  { key: 'uc', name: 'Unified Communications' },
+  { key: 'security', name: 'Security' },
+];
+
+/* side: where the text sits. icon: rail icon id. layer: stack slab to light up. */
+export const CHAPTERS = [
+  { id: 'hero', label: 'Arrival', icon: 'cloud', side: 'center',
+    title: 'The infrastructure behind the Maldives.',
+    lead: 'RoseWare designs, builds and supports networks, data centres and security systems for organisations across the Maldives.',
+    caption: 'Since 2007. Built in Malé.' },
+  { id: 'jetty', label: 'Who we are', icon: 'pier', side: 'left', tag: 'Chapter 01',
+    title: 'One team, from first word to long-term support.',
+    caption: 'Since 2007, from Malé to every atoll.',
+    more: { kicker: 'Who we are', title: 'The infrastructure behind Maldivian government and business.',
+      body: 'RoseWare designs, builds and supports networks, data centres and security systems for organisations across the Maldives. One team, from the first conversation to long-term support.',
+      stats: [['2007', 'In business since'], ['18', 'Global vendor partners'], ['12', 'Partner awards'], ['20', 'Atolls and Malé']] } },
+  { id: 'stack', label: 'The stack', icon: 'layers', side: 'left', tag: 'Chapter 02', layer: -1,
+    title: 'Six layers. One team.',
+    caption: 'From the power room to the phone on the desk.',
+    more: { kicker: 'The stack', title: 'Every layer, designed, built and supported by one team.',
+      body: 'We design, build and support every layer, from the power room to the phone on the desk, so nothing gets lost between a consultant, a supplier and an installer.',
+      list: ['Data Centre Power & Cooling', 'Servers, Storage & Business Continuity', 'Desktop & Server Virtualization', 'Network Infrastructure', 'Unified Communications', 'Security'] } },
+  { id: 'power', label: 'Power & cooling', icon: 'bolt', side: 'right', tag: 'Chapter 03', layer: 0,
+    title: 'Power that never blinks.',
+    caption: 'Data Centre Power & Cooling',
+    more: { kicker: 'Data Centre Power & Cooling', title: 'Power that never blinks.',
+      body: 'UPS, cooling and power distribution that keep critical rooms running through outages, heat and salt air.',
+      list: ['UPS and battery backup', 'Precision cooling for server rooms', 'Power distribution and monitoring'], cta: 'Ask about power' } },
+  { id: 'servers', label: 'Servers & storage', icon: 'server', side: 'left', tag: 'Chapter 04', layer: 1,
+    title: 'Your data, always somewhere safe.',
+    caption: 'Servers, Storage, Business Continuity & Virtualization',
+    more: { kicker: 'Servers, Storage & Business Continuity', title: 'Your data, always somewhere safe.',
+      body: 'Servers, storage, backup and replication, sized for today and ready for the day something fails. And with virtualization, more from every server: run more on less hardware, and deliver secure desktops to staff on any island.',
+      list: ['Enterprise servers and storage arrays', 'Backup and replication', 'Business continuity planning', 'Server virtualization', 'Virtual desktops', 'Consolidation and migration'], cta: 'Ask about storage' } },
+  { id: 'network', label: 'Network & comms', icon: 'network', side: 'left', tag: 'Chapter 05', layer: 3,
+    title: 'Connected, end to end.',
+    caption: 'Network Infrastructure & Unified Communications',
+    more: { kicker: 'Network Infrastructure', title: 'Connected, end to end.',
+      body: 'Fast, secure connectivity that’s designed, built and supported end to end, from structured cabling to the WAN. And voice, video and IPTV as one platform for your people, your sites and your guests, from the front desk to the furthest island.',
+      list: ['Structured copper and fibre-optic cabling', 'Enterprise switching and Wi-Fi', 'MAN over fibre and point-to-point wireless', 'WAN and SD-WAN for multi-site connectivity', '24/7 network monitoring and management', 'IP telephony', 'Video conferencing', 'IPTV for hotels, resorts and hospitals'], cta: 'Ask about networks' } },
+  { id: 'security', label: 'Security', icon: 'shield', side: 'right', tag: 'Chapter 06', layer: 5,
+    title: 'Security wraps every layer.',
+    caption: 'Not a box at the edge. A shell around the whole stack.',
+    more: { kicker: 'Security', title: 'Security wraps every layer.',
+      body: 'Not a box at the edge. A shell around the whole stack, from the door of the server room to the last endpoint.',
+      list: ['Cybersecurity advisory', 'Threat protection', 'Physical security'], cta: 'Ask about security' } },
+  { id: 'projects', label: 'Projects', icon: 'pin', side: 'left', tag: 'Chapter 07',
+    title: 'Twenty atolls. One team.',
+    caption: 'From Haa Alif to Addu, 870 km north to south.',
+    more: { kicker: 'Every service, across the Maldives', title: 'Twenty atolls. One team.',
+      body: 'From Haa Alif to Addu, our engineers design, install and support the same full range of services we deliver in Malé: at resorts, on inhabited islands and at the most remote sites.',
+      stats: [['20', 'Atolls and Malé'], ['870 km', 'North to south'], ['8 of 8', 'Services, everywhere'], ['4', 'Projects, and counting']], projects: true } },
+  { id: 'talk', label: 'Talk to us', icon: 'chat', side: 'left', tag: 'Chapter 08',
+    title: 'Tell us what you need to run.',
+    caption: 'Engineers on call in Malé.',
+    lead: 'From a single UPS to a new data centre, the right engineer will get back to you.',
+    contact: true },
+];
+
+export const ICONS = {
+  cloud: '<path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.2 9.3 4.4 4.4 0 0 0 7 18z"/>',
+  pier: '<path d="M3 15h18M6 15v5M12 15v5M18 15v5M12 4v11M8 8l4-4 4 4"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5" opacity=".55"/>',
+  bolt: '<path d="M13 2L5 14h6l-1 8 8-12h-6l1-8z"/>',
+  server: '<rect x="4" y="3" width="16" height="7" rx="1.5"/><rect x="4" y="14" width="16" height="7" rx="1.5"/><path d="M8 6.5h.01M8 17.5h.01"/>',
+  network: '<circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v5M12 12l-6 5.5M12 12l6 5.5"/>',
+  shield: '<path d="M12 3l8 3v6c0 4.6-3.4 8.4-8 9-4.6-.6-8-4.4-8-9V6l8-3z"/>',
+  pin: '<path d="M12 21s-6-5.3-6-11a6 6 0 0 1 12 0c0 5.7-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>',
+  chat: '<path d="M4 5h16v11H9l-5 4V5z"/>',
+};
