@@ -242,10 +242,10 @@ def build_B1():
     slab(lv, z0, holes=()); retaining(lv, z0 - SLAB, TOP['B1']); core(lv, z0, z1); columns(lv, z0, cz, skip=((0., -4.), (6., -4.), (0., 2.5), (6., 2.5)))
     boxr(lv, M['floor_dark'], X0, X1, Y0, Y1, z0, rf - .04); boxr(lv, M['carpet'], -6., X1, Y0, Y1, rf - .04, rf); boxr(lv, M['floor_dark'], X0, -6., Y0, 2.5, rf - .04, rf)
     # north wall with video wall
-    boxr(lv, M['concrete_dark'], -6., X1, 3.6, 3.9, rf, cz)
-    box(lv, M['screen_back'], (9.2, .1, 3.0), (3., 3.52, rf + 1.95))
+    boxr(lv, M['concrete_dark'], -6., 6.2, 3.6, 3.9, rf, cz)
+    box(lv, M['screen_back'], (9.2, .1, 3.0), (1., 3.52, rf + 1.95))
     for i in range(4):
-        for j in range(2): plane(lv, M['screen'], 2.18, 1.4, (3. - 3.3 + i * 2.2, 3.46, rf + 1.25 + j * 1.42), name=f'soc_wall_{i}_{j}')
+        for j in range(2): plane(lv, M['screen'], 2.18, 1.4, (1. - 3.3 + i * 2.2, 3.46, rf + 1.25 + j * 1.42), name=f'soc_wall_{i}_{j}')
     # tiers of desks facing north
     for r, (yy, h) in enumerate(((-.2, 0.), (-2.6, .25), (-5.0, .5))):
         if h: boxr(lv, M['carpet'], -5.5, 11.5, yy - 1.2, yy + 1.0, rf, rf + h); boxr(lv, M['led_blue'], -5.5, 11.5, yy + .99, yy + 1.0, rf + h - .05, rf + h - .01)
@@ -304,7 +304,7 @@ def build_G():
 # ===== offices
 def office_floor(lv, people_desks=True, dense=True):
     z0 = Z[lv]; z1 = TOP[lv] - SLAB; cz = z1 - .55
-    slab(lv, z0); core(lv, z0, z1); columns(lv, z0, cz)
+    slab(lv, z0); core(lv, z0, z1); columns(lv, z0, cz, skip=((0., -4.), (0., 2.5)))
     boxr(lv, M['carpet'], X0, X1, Y0, Y1, z0, z0 + .02)
     clusters = [(-3., -4.6), (3.6, -4.6), (-3., -.6), (3.6, -.6), (9.6, -2.6)] if dense else [(-2., -4.), (5., -4.)]
     for (cx, cy) in clusters:
