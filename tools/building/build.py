@@ -165,6 +165,12 @@ def _rotate_last_special(rz, centre):
     if not rz: return
     lv, n, bm, m = SPECIAL[-1]; bmesh.ops.rotate(bm, verts=bm.verts, cent=centre, matrix=Matrix.Rotation(rz, 3, 'Z'))
 
+def plant(lv, x, y, z, h=1.5):
+    cyl(lv, M['white_gloss'], .26, .5, (x, y, z + .25), 18, r2=.32)
+    for k in range(7):
+        a = k * 2.4; r = .12 + (k % 3) * .08; zz = z + .55 + k * h / 9
+        bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=1, radius=.26 - k * .015); place(bm, (x + math.cos(a) * r, y + math.sin(a) * r, zz)); L(lv).add_bm(bm, M['plant']); bm.free()
+
 # ===== B3: power & cooling plant
 def build_B3():
     lv = 'B3'; z0 = Z['B3']; z1 = TOP['B3'] - SLAB
@@ -193,7 +199,9 @@ def build_B3():
     # pipes overhead
     for k, y in enumerate((-5.5, -4.8, 4., 4.7)): cyl(lv, M['pipe'], .16, 22., (0, y, z1 - .55 - (k % 2) * .25), 18, 'X')
     for x in (-8., 0., 8.): cyl(lv, M['red'], .17, .12, (x, -5.5, z1 - .55), 18, 'X'); cyl(lv, M['led_blue'] if False else M['concrete_dark'], .17, .1, (x + 1, 4., z1 - .55), 18, 'X')
-    for x in (-8, -2, 4, 10): box(lv, M['light_cool'], (3., .12, .04), (x, -2.4, z1 - .06)); box(lv, M['light_cool'], (3., .12, .04), (x, 2.0, z1 - .06))
+    for x in (-8, -2, 4, 10):
+        for y in (-6., -2.4, .8, 3.2, 6.): box(lv, M['light'], (3., .16, .04), (x, y, z1 - .9))
+        for y in (-6., -2.4, .8, 3.2, 6.): box(lv, M['metal_dark'], (.03, .03, .85), (x, y, z1 - .45))
 
 # ===== B2: data hall
 def build_B2():
@@ -219,6 +227,7 @@ def build_B2():
     for k in range(4): box(lv, M['ups'], (1., 2.4, 2.1), (11.4, -5.5 + k * 2.9, rf + 1.05), bevel=.02); plane(lv, M['screen'], .2, .12, (10.89, -5.5 + k * 2.9, rf + 1.6), name='screen_ups', facing='-X')
     boxr(lv, M['concrete_dark'], X0, X1, Y0, Y1, z1 - .02, z1)
     for x in (-2.4, 3., 8.4): box(lv, M['light_cool'], (.12, 10., .04), (x, -1.2, z1 - .25))
+    for x in (.3, 5.7, -5.): box(lv, M['light_cool'], (.1, 10., .04), (x, -1.2, z1 - .25))
     for x in (-6., 12.): pass
     plane(lv, M['logo'], 3.2, .65, (-6.18, 0., rf + 2.4), name='logo_wall', facing='+X')
 
@@ -253,7 +262,7 @@ def build_B1():
 def build_G():
     lv = 'G'; z0 = Z['G']; z1 = TOP['G'] - SLAB; cz = 4.8
     slab(lv, z0, holes=[(6., 10.5, 1., 6.)])
-    core(lv, z0, z1); columns(lv, z0, cz, skip=((6., 2.5),))
+    core(lv, z0, z1); columns(lv, z0, cz, skip=((6., 2.5), (0., 2.5), (0., -4.)))
     boxr(lv, M['stone'], X0, 6., Y0, Y1, z0, z0 + .02); boxr(lv, M['stone'], 10.5, X1, Y0, Y1, z0, z0 + .02); boxr(lv, M['stone'], 6., 10.5, Y0, 1., z0, z0 + .02); boxr(lv, M['stone'], 6., 10.5, 6., Y1, z0, z0 + .02)
     # reception desk + red light line
     box(lv, M['white_gloss'], (5.2, .9, 1.1), (0., 2.2, .55), bevel=.06); box(lv, M['white_gloss'], (5.4, 1.1, .05), (0., 2.2, 1.12), bevel=.02)
@@ -264,8 +273,15 @@ def build_G():
     for k in range(46): box(lv, M['timber'], (.08, .08, 4.3), (-4.5 + k * .2, 4.86, 2.17))
     plane(lv, M['logo'], 4.4, .89, (0., 4.79, 2.9), name='logo_lobby')
     box(lv, M['led_red'], (9., .04, .04), (0., 4.78, 4.3))
-    # lounge rug and a low wall
+    # lounge: rug, sofas, coffee table, plants
     boxr(lv, M['fabric'], -10.5, -4.5, -6.2, -1.6, z0 + .02, z0 + .03)
+    for (x, y, rz) in ((-7.55, -5.3, 0.), (-7.55, -2.5, math.pi)):
+        c, s_ = math.cos(rz), math.sin(rz)
+        box(lv, M['fabric_red'] if rz else M['fabric'], (3.0, .9, .42), (x, y, .21), bevel=.06, rz=rz)
+        box(lv, M['fabric_red'] if rz else M['fabric'], (3.0, .24, .82), (x - 0 * c, y - .4 * c, .41), bevel=.07, rz=rz)
+        for sx in (-1.45, 1.45): box(lv, M['fabric_red'] if rz else M['fabric'], (.2, .9, .62), (x + sx, y, .31), bevel=.05, rz=rz)
+    box(lv, M['timber'], (1.6, .8, .06), (-7.55, -3.9, .38), bevel=.02); box(lv, M['metal_dark'], (1.4, .6, .35), (-7.55, -3.9, .18))
+    for (x, y) in ((-11.2, -6.9), (-4.9, -6.9), (5.2, 4.3), (-4.9, 4.3)): plant(lv, x, y, 0.)
     # lobby screen on east wall
     box(lv, M['screen_back'], (.08, 3.4, 2.0), (11.9, -3., 2.4)); plane(lv, M['screen'], 3.2, 1.8, (11.85, -3., 2.4), name='screen_lobby', facing='-X')
     # stair void balustrade and stairs down to B1
@@ -306,6 +322,7 @@ def build_L1():
     # kitchen island and red feature wall on the core
     box(lv, M['white_gloss'], (3.2, 1., .95), (-2.5, 5.6, z0 + .48), bevel=.03); box(lv, M['red'], (3.0, .02, .5), (-2.5, 5.09, z0 + .5))
     plane(lv, M['logo'], 4.2, 1.0, (-6.17, -1.5, z0 + 2.3), name='graphic_l1', facing='+X')
+    for (x, y) in ((11.2, -7.2), (-5.6, -7.2), (11.2, 2.2), (6.5, 2.4)): plant(lv, x, y, z0)
     box(lv, M['red'], (.06, 6.0, 3.4), (-6.2, -1.5, z0 + 2.0))
 def build_L2():
     lv = 'L2'; z0 = Z[lv]; z1 = TOP[lv] - SLAB; cz = z1 - .55
@@ -322,6 +339,7 @@ def build_L2():
     for (x, y) in ((-3., -5.5), (5., -5.5)):
         box(lv, M['fabric'], (2.6, .9, .45), (x, y, z0 + .23), bevel=.08); box(lv, M['fabric'], (2.6, .25, .8), (x, y - .4, z0 + .4), bevel=.08)
     box(lv, M['white'], (1.2, .7, .4), (1., -5.4, z0 + .2), bevel=.04)
+    for (x, y) in ((-5.5, -7.2), (11.2, -7.2), (-5.5, .6)): plant(lv, x, y, z0, 1.8)
     boxr(lv, M['white'], X0, X1, Y0, Y1, cz, cz + .04); ceiling_lines(lv, cz); void_services(lv, cz + .04, z1)
 def build_upper(lv): office_floor(lv)
 def build_ROOF():
@@ -379,9 +397,9 @@ def build_FACADE():
     # L2 balcony
     boxr(lv, M['concrete'], -.5, 3.5, Y0 - 2.2, Y0, Z['L2'] - .3, Z['L2'] + .02); box(lv, M['glass'], (4., .03, 1.1), (1.5, Y0 - 2.18, Z['L2'] + .55), name='balcony_glass')
     # soil around the basements (shows in section)
-    for (x0, x1, y0, y1) in ((-40, 40, -34, Y0 - .4), (-40, 40, Y1 + .4, 34), (-40, X0 - .4, Y0 - .4, Y1 + .4), (X1 + .4, 40, Y0 - .4, Y1 + .4)):
+    for (x0, x1, y0, y1) in ((-40, 40, -26, Y0 - .4), (-40, 40, Y1 + .4, 26), (-40, X0 - .4, Y0 - .4, Y1 + .4), (X1 + .4, 40, Y0 - .4, Y1 + .4)):
         boxr(lv, M['soil'], x0, x1, y0, y1, -13.2, -.03)
-    boxr(lv, M['soil'], -40, 40, -34, 34, -14.2, -13.2)
+    boxr(lv, M['soil'], -40, 40, -26, 26, -14.2, -13.2)
 
 BUILD = dict(B3=build_B3, B2=build_B2, B1=build_B1, G=build_G, L1=build_L1, L2=build_L2, L3=lambda: build_upper('L3'), L4=lambda: build_upper('L4'), L5=lambda: build_upper('L5'), ROOF=build_ROOF, FACADE=build_FACADE)
 for k, f in BUILD.items(): f()
