@@ -156,6 +156,11 @@ body.nogl #enterBtn{display:none}
  #enterBtn{font-size:12px;letter-spacing:.24em;white-space:nowrap;gap:12px}#enterBtn::before,#enterBtn::after{width:18px}
 }
 @media (prefers-reduced-motion:reduce){.w>span,.fx,.tag{transition-duration:.01s!important;transition-delay:0s!important}.gild{animation:none}}
+#floorTag{position:fixed;left:50%;top:74px;transform:translate(-50%,-6px);padding:7px 14px 7px 12px;border-radius:99px;background:rgba(18,19,22,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;font:500 12px/1 Inter,sans-serif;letter-spacing:.04em;opacity:0;transition:opacity .5s,transform .5s;pointer-events:none;z-index:6;display:flex;align-items:center;gap:8px}
+#floorTag:before{content:'';width:7px;height:7px;border-radius:50%;background:#e2231a;box-shadow:0 0 10px #e2231a}
+#floorTag.on{opacity:1;transform:translate(-50%,0)}
+body.grabbing,body.grabbing *{cursor:grabbing!important}
+#gl{cursor:grab}
 </style>
 </head>
 <body>
@@ -170,7 +175,7 @@ body.nogl #enterBtn{display:none}
 
 <header class="top ui">
   <div><a class="pill light logoPill" href="#" data-go="0" aria-label="RoseWare, back to the start"><img class="logoimg" alt="RoseWare"></a><button class="pill light" id="aboutBtn">About</button></div>
-  <div><button class="pill light" id="soundBtn" aria-pressed="false"><span class="hideS">Sound</span><span class="wv" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button><a class="pill red" href="#" data-go="8">Talk to an engineer</a></div>
+  <div><button class="pill light" id="soundBtn" aria-pressed="false"><span class="hideS">Sound</span><span class="wv" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button><a class="pill red" href="#" data-go="talk">Talk to an engineer</a></div>
 </header>
 <div id="skyChip" class="ui"></div>
 <nav id="rail" class="ui" aria-label="Chapters"></nav>
@@ -194,6 +199,7 @@ body.nogl #enterBtn{display:none}
     function px(l){var k=i*4;d[k]=rr;d[k+1]=gg;d[k+2]=bb;d[k+3]=l*17;i++}
     while(p<b.length&&i<W*H){var v=b.charCodeAt(p++);if(v<128){i+=v+1}else if(v<192){var r=(v&63)+1;while(r--)px(15)}else if(v<208){px(v&15);px(b.charCodeAt(p++))}else{px(v&15)}}
     g.putImageData(im,0,0);return c}
+  window.__logoMk=mk;
   try{var red=mk('#e2231a'),u=red.toDataURL();document.documentElement.style.setProperty('--logo','url('+u+')');document.querySelectorAll('.logoimg').forEach(function(e){e.src=u})}catch(e){}
   /* faint topographic atoll lines on the paper */
   var cv=document.getElementById('contours'),x=cv.getContext('2d'),dp=Math.min(devicePixelRatio||1,2);cv.width=innerWidth*dp;cv.height=innerHeight*dp;x.scale(dp,dp);
@@ -202,6 +208,6 @@ body.nogl #enterBtn{display:none}
   setTimeout(function(){if(!window.__frame&&!window.__fail){document.getElementById('loadMsg').textContent='Still loading the island…'}},12000);
 })();
 </script>
-<script type="module" src="js/main.js?v=1795219102"></script>
+<script type="module" src="js/main.js?v=1795242399"></script>
 </body>
 </html>
