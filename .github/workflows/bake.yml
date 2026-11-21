@@ -1,0 +1,52 @@
+name: bake-building
+on:
+  workflow_dispatch:
+    inputs:
+      samples: {default: '128'}
+      res: {default: '2048'}
+  push:
+    paths: ['tools/building/build.py']
+permissions: {contents: write}
+concurrency: {group: bake, cancel-in-progress: true}
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        level: [B3, B2, B1, G, L1, L2, L3, L4, L5, ROOF, FACADE]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 libegl1 libsm6 libxkbcommon0 >/dev/null
+      - run: pip install -q bpy==4.2.0 numpy
+      - name: bake
+        run: |
+          S=${{ github.event.inputs.samples || '128' }}; R=${{ github.event.inputs.res || '2048' }}
+          if [ "${{ matrix.level }}" = "FACADE" ] || [ "${{ matrix.level }}" = "ROOF" ]; then R=1024; fi
+          python tools/building/build.py --out out --level ${{ matrix.level }} --bake $S --res $R 2>&1 | grep -vE "^[0-9:]+ \| INFO" | tail -40
+          rm -f out/*.exr; ls -la out
+      - uses: actions/upload-artifact@v4
+        with: {name: 'lv-${{ matrix.level }}', path: out}
+  collect:
+    needs: bake
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: {path: dl}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - name: compress + commit
+        run: |
+          mkdir -p assets/building
+          for d in dl/lv-*; do
+            n=${d#dl/lv-}
+            npx -y @gltf-transform/cli@4 meshopt "$d/$n.glb" "assets/building/$n.glb" --level medium
+            cp "$d/lm_$n.jpg" assets/building/ || true
+          done
+          ls -la assets/building
+          git config user.name github-actions; git config user.email actions@github.com
+          git add assets/building; git commit -m "bake building lightmaps" || exit 0
+          git pull --rebase; git push
