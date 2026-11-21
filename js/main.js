@@ -112,7 +112,7 @@ const W = [
   /* and down to the power plant */
   [[2.8, -7.4, 7.8], [2, -10.4, -2], null, null, -.1], [[.4, -9.3, 7.8], [-1, -11.6, -2], null, null, .18],
   [[-4, -10.4, 6.9], [4, -11.6, 1]],
-  [[-9.8, -10.7, 2.2], [8, -11.6, 1.2], 4, 54],
+  [[-5.2, -10.7, 1.0], [9, -11.6, .8], 4, 56],
   /* back out through the cut and up: the whole section */
   [[-4.5, -9.4, 10], [0, -6, 0]], [[6, -2, 26], [-2, 4, 0], null, null, -.07],
   [[27, 3.5, 76], [-9.5, 5.2, 0], 5, 43],
@@ -125,7 +125,7 @@ const W = [
   [[34, 22, 62], [9, 13, 0], 7, 42],
   /* rise through the cloud to the atolls */
   [[70, 160, 170], [0, 0, 0]], [[260, 1700, 1300], [0, 0, 200]],
-  [[-1250, 7900, 2900], [-1350, 0, 650], 8, 45],
+  [[-1250, 8200, 2500], [-1350, 0, 250], 8, 45],
   [[-300, 900, 1100], [0, 0, 0]], [[-20, 30, 120], [-10, 10, 0]],
   [[-9, 3.2, 74], [-17, 13, 0], 9, 46],
 ];
@@ -269,7 +269,8 @@ const frame = now => {
   const pj = near(CH('projects')); map.mesh.material.opacity = sstep(1500, 4500, alt) * .95; map.beamM.uniforms.uA.value = map.mesh.material.opacity; map.sea.material.opacity = sstep(1200, 4200, alt) * .97; map.sea.visible = map.mesh.visible = map.sea.material.opacity > .005;
   map.pins.forEach((p, i) => { p.grp.visible = map.mesh.material.opacity > .01; const s = 1 + Math.sin(t * 2.2 + i) * .25; p.ring.scale.setScalar(s * (1 + pj)); p.ring.material.opacity = (1.2 - s * .6) * map.mesh.material.opacity; p.dot.material.opacity = map.mesh.material.opacity; });
   U.uCloudA.value = sstep(250, 900, alt) * (1 - sstep(2600, 5000, alt)); clouds.visible = U.uCloudA.value > .01;
-  water.visible = (!inside || camP.y > -.5) && sf > 20; palms.forEach(m => m.visible = sf > 20);
+  const high = alt > 2600; city.G.visible = !high && (!inside || camP.y > -.5); if (HQ) HQ.root.visible = !high; if (PEOPLE) PEOPLE.root.visible = !high;
+  water.visible = (!inside || camP.y > -.5) && sf > 20 && map.sea.material.opacity < .9; palms.forEach(m => m.visible = sf > 20 && !high);
   if (HQ) {
     for (const n in HQ.LV) HQ.LV[n].grp.visible = levelVisible(n, camP, inside);
     HQ.update(t, camP.y, inside); const nl = LOOKNOW.night; HQ.NIGHTGLOW.forEach(([m, d, n2]) => m.color.setScalar(lerp(d, n2, nl)));
