@@ -42,7 +42,7 @@ const cast = () => {
   /* upper floors: a few at desks (seen in the section) */
   ['L3', 'L4', 'L5'].forEach(lv => clusters.forEach(([cx, cy]) => { for (let i = 0; i < 3; i++) for (const s of [-1, 1]) if (rnd() < .28) deskSit(lv, cx + (i - 1) * 1.45, cy + s * .42, s < 0 ? 0 : Math.PI, 'type'); }));
   /* outside on the plaza */
-  P.push({ lv: 'OUT', pose: 'walk', path: [V(-16, 0, 14), V(16, 0, 14)] }, { lv: 'OUT', pose: 'walk', path: [V(14, 0, 19), V(-14, 0, 19)] }, { lv: 'OUT', pose: 'walk', path: [V(1.2, 0, 22), V(1.2, 0, 9.2)] });
+  P.push({ lv: 'OUT', pose: 'walk', path: [V(-30, 0, 10.2), V(14, 0, 10.2)] }, { lv: 'OUT', pose: 'walk', path: [V(30, 0, 20.8), V(-30, 0, 20.8)] }, { lv: 'OUT', pose: 'walk', path: [V(15.4, 0, -30), V(15.4, 0, 10.4), V(-6, 0, 10.4)] }, { lv: 'OUT', pose: 'walk', path: [V(23.6, 0, 40), V(23.6, 0, -40)] }, { lv: 'OUT', pose: 'stand', pos: V(3.2, 0, 10.0), ry: -.6, clip: 'agree' }, { lv: 'OUT', pose: 'stand', pos: V(4.1, 0, 10.6), ry: 2.4, clip: 'idle' });
   return P;
 };
 

@@ -22,26 +22,38 @@ export const patchMat = (m, o) => {
   m.clippingPlanes = [o.facade ? SEC.fac : SEC.lv]; m.clipShadows = true;
   if (cap) m.side = THREE.DoubleSide;
   const U = { uSecZ: uSec, uLine: SEC.uLine, uCapA: { value: new THREE.Color(o.capA || 0xd9d3c8) }, uCapB: { value: new THREE.Color(o.capB || 0x8f877c) }, uCapF: { value: o.capF || 9 },
-    tTri: { value: o.tri ? o.tri.tex : null }, uTriS: { value: o.tri ? o.tri.s : 1 }, uTriK: { value: o.tri ? o.tri.k : 0 }, uTriAvg: { value: o.tri ? o.tri.avg : .5 } };
+    tTri: { value: o.tri ? o.tri.tex : null }, uTriS: { value: o.tri ? o.tri.s : 1 }, uTriK: { value: o.tri ? o.tri.k : 0 }, uTriAvg: { value: o.tri ? o.tri.avg : .5 },
+    tCapTex: { value: o.capTex || null }, uRedK: { value: o.line ? 1 : 0 }, uBoxMin: { value: new THREE.Vector3(-12, -1, -8) }, uBoxMax: { value: new THREE.Vector3(12, 4, 8) }, uBoxPos: { value: new THREE.Vector3(0, 1.6, 0) } };
   m.userData.U = U;
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP;varying vec3 vWN;')
       .replace('#include <fog_vertex>', '#include <fog_vertex>\nvWP=(modelMatrix*vec4(transformed,1.)).xyz;vWN=normalize(mat3(modelMatrix)*objectNormal);');
     let f = sh.fragmentShader.replace('#include <common>', `#include <common>
-      varying vec3 vWP;varying vec3 vWN;uniform float uSecZ,uLine,uCapF,uTriS,uTriK,uTriAvg;uniform vec3 uCapA,uCapB;uniform sampler2D tTri;`);
+      varying vec3 vWP;varying vec3 vWN;uniform float uSecZ,uLine,uCapF,uTriS,uTriK,uTriAvg,uRedK;uniform vec3 uCapA,uCapB,uBoxMin,uBoxMax,uBoxPos;uniform sampler2D tTri,tCapTex;
+      vec3 boxProj(vec3 v){vec3 a=(uBoxMax-vWP)/v,b=(uBoxMin-vWP)/v;vec3 m=max(a,b);float t=min(min(m.x,m.y),m.z);return normalize(vWP+v*t-uBoxPos);}`);
     if (o.tri) f = f.replace('#include <map_fragment>', `#include <map_fragment>
       {vec3 bw=pow(abs(vWN),vec3(4.));bw/=bw.x+bw.y+bw.z+1e-4;vec3 q=vWP*uTriS;
        vec3 tx=texture2D(tTri,q.zy).rgb*bw.x+texture2D(tTri,q.xz).rgb*bw.y+texture2D(tTri,q.xy).rgb*bw.z;
        diffuseColor.rgb*=mix(1.,dot(tx,vec3(.333))/uTriAvg,uTriK);}`);
-    if (o.noDirect) f = f.replace('#include <lights_fragment_begin>', DIRECT_OFF(THREE.ShaderChunk.lights_fragment_begin));
+    if (o.noDirect) {
+      f = f.replace('#include <lights_fragment_begin>', DIRECT_OFF(THREE.ShaderChunk.lights_fragment_begin));
+      /* lightmap carries all diffuse light; the (local, box-projected) environment adds reflections only */
+      f = f.replace('#include <lights_fragment_maps>', THREE.ShaderChunk.lights_fragment_maps.replace('iblIrradiance += getIBLIrradiance( geometryNormal );', ''));
+      if (o.box) f = f.replace('#include <envmap_physical_pars_fragment>', THREE.ShaderChunk.envmap_physical_pars_fragment.replace('reflectVec = inverseTransformDirection( reflectVec, viewMatrix );', 'reflectVec = boxProj( inverseTransformDirection( reflectVec, viewMatrix ) );'));
+    }
     f = f.replace('#include <dithering_fragment>', `#include <dithering_fragment>
       ${cap ? `if(!gl_FrontFacing){vec3 rd=normalize(vWP-cameraPosition);float tt=(uSecZ-cameraPosition.z)/(abs(rd.z)>1e-4?rd.z:1e-4);vec3 sp=cameraPosition+rd*max(tt,0.);
-        float hs=fract((sp.x+sp.y)*uCapF);float h=smoothstep(.0,.06,hs)*(1.-smoothstep(.12,.18,hs));
-        gl_FragColor=vec4(mix(uCapA,uCapB,h),1.);}else` : ''}{float d=uSecZ-vWP.z;gl_FragColor.rgb=mix(gl_FragColor.rgb,vec3(2.4,.16,.1),(1.-smoothstep(0.,.03,d))*step(-.001,d)*uLine);}`);
+        float hs=fract((sp.x+sp.y)*uCapF);float h=smoothstep(.0,.05,hs)*(1.-smoothstep(.1,.15,hs));
+        vec3 cc=uCapA;${o.capTex ? 'float ct=dot(texture2D(tCapTex,sp.xy*.35).rgb,vec3(.333));cc*=.62+ct*.9;' : ''}
+        gl_FragColor=vec4(mix(cc,uCapB,h*.6),1.);}else` : ''}{float d=uSecZ-vWP.z;
+        float on=step(uLine,.5)<.5?1.:0.;
+        /* shadowed band just behind the cut: rooms read as dark voids between the bright cut concrete */
+        gl_FragColor.rgb*=mix(1.,mix(.42,1.,smoothstep(0.,1.4,d)),on*step(-.001,d)*smoothstep(6.,24.,cameraPosition.z-uSecZ));
+        gl_FragColor.rgb=mix(gl_FragColor.rgb,vec3(2.6,.16,.1),(1.-smoothstep(0.,.022,d))*step(-.001,d)*uLine*uRedK);}`);
     sh.fragmentShader = f;
   };
-  m.customProgramCacheKey = () => `rw${cap ? 1 : 0}${o.tri ? 1 : 0}${o.noDirect ? 1 : 0}${o.facade ? 1 : 0}`;
+  m.customProgramCacheKey = () => `rw${cap ? 1 : 0}${o.tri ? 1 : 0}${o.noDirect ? 1 : 0}${o.facade ? 1 : 0}${o.box ? 1 : 0}${o.capTex ? 1 : 0}`;
   return m;
 };
 
@@ -143,9 +155,14 @@ export const loadHQ = async ({ manager, TL, U, Q, onLevel }) => {
           m = new THREE.MeshStandardMaterial({ color: src.color, roughness: src.roughness, metalness: src.metalness, envMapIntensity: facade || name === 'ROOF' ? 1 : .22 });
           if (lm && o.geometry.attributes.uv1) { m.lightMap = lm; m.lightMapIntensity = lmI; }
           const soil = mn === 'M_soil';
-          patchMat(m, { cap: true, tri: triO, noDirect: !!(lm && o.geometry.attributes.uv1) && !facade && name !== 'ROOF', facade, capA: soil ? 0x8a6a4a : mn === 'M_concrete' ? 0xe1dbd0 : 0x2f3136, capB: soil ? 0x5d4630 : mn === 'M_concrete' ? 0x9d958a : 0x24262a, capF: soil ? 3 : 9 });
+          const conc = mn === 'M_concrete' || mn === 'M_concrete_dark' || mn === 'M_white' || mn === 'M_panel', lmOn = !!(lm && o.geometry.attributes.uv1);
+          patchMat(m, { cap: true, tri: triO, noDirect: lmOn && !facade && name !== 'ROOF', box: lmOn && !facade && name !== 'ROOF', facade: facade && !soil, line: mn === 'M_concrete',
+            capTex: conc || soil ? tri(soil ? 'sand' : 'concrete').tex : null,
+            capA: soil ? 0x9a7650 : conc ? 0xd8d3ca : 0x55575c, capB: soil ? 0x6a5036 : conc ? 0xa59e93 : 0x45474b, capF: soil ? 2.2 : conc ? 7 : 40 });
+          if (lmOn && !facade && name !== 'ROOF') { m.envMapIntensity = 1; m.userData.level = name; }
           if (t) m.userData.slot = t[0];
           if (!lm) m.envMapIntensity = facade || name === 'ROOF' ? 1 : .55;
+          if (mn === 'M_stone') m.roughness = .16; if (mn === 'M_white_gloss') m.roughness = .18; if (mn === 'M_floor_dark') m.roughness = .32; if (mn === 'M_floor_epoxy') m.roughness = .24;
           mats.push(m);
         }
         cache[key] = m; o.material = m; o.castShadow = facade || name === 'ROOF' || o.material === m && (mn === 'M_concrete' && !lm); o.receiveShadow = facade || name === 'ROOF' || !lm;
@@ -160,4 +177,25 @@ export const loadHQ = async ({ manager, TL, U, Q, onLevel }) => {
     if (t - ft > .12) { ft = t; for (const k in SCREENS) { const s = SCREENS[k]; s.draw(t); if (s.clones) s.clones.forEach(c => c.needsUpdate = true); } }
   };
   return { root, LV, update, NIGHTGLOW, GLASS };
+};
+
+/* local reflections: one cube capture per floor, PMREM-filtered, box-projected onto that floor's materials */
+const ROOM = { B3: [-12.6, -8.75], B2: [-8.1, -4.55], B1: [-3.9, -.95], G: [0, 4.8], L1: [5.42, 8.7], L2: [9.62, 12.9], L3: [13.82, 17.1], L4: [18.02, 21.3], L5: [22.22, 25.5] };
+export const captureEnv = (renderer, scene, HQ, hide = []) => {
+  const pmrem = new THREE.PMREMGenerator(renderer); const rt = new THREE.WebGLCubeRenderTarget(256, { type: THREE.HalfFloatType });
+  const cc = new THREE.CubeCamera(.05, 200, rt); scene.add(cc);
+  const vis = {}; for (const n in HQ.LV) vis[n] = HQ.LV[n].grp.visible; const hv = hide.map(o => o.visible);
+  const sl = SEC.lv.constant, sf = SEC.fac.constant; SEC.lv.constant = SEC.fac.constant = 60; SEC.uLv.value = SEC.uFac.value = 60; const ln = SEC.uLine.value; SEC.uLine.value = 0;
+  hide.forEach(o => o.visible = false);
+  for (const n in ROOM) {
+    const L = HQ.LV[n]; if (!L) continue; const [y0, y1] = ROOM[n];
+    for (const k in HQ.LV) HQ.LV[k].grp.visible = k === n || k === 'FACADE';
+    const pos = new THREE.Vector3(2, Math.min(y0 + 1.7, (y0 + y1) / 2), .5); cc.position.copy(pos); cc.update(renderer, scene);
+    const env = pmrem.fromCubemap(rt.texture).texture;
+    L.grp.traverse(o => { if (!o.isMesh) return; const m = o.material; if (!m.userData || m.userData.level !== n || !m.userData.U) return;
+      m.envMap = env; m.userData.U.uBoxMin.value.set(-12, y0, -8); m.userData.U.uBoxMax.value.set(12, y1, 8); m.userData.U.uBoxPos.value.copy(pos); m.needsUpdate = true; });
+  }
+  for (const n in HQ.LV) HQ.LV[n].grp.visible = vis[n]; hide.forEach((o, i) => o.visible = hv[i]);
+  SEC.lv.constant = sl; SEC.fac.constant = sf; SEC.uLv.value = sl; SEC.uFac.value = sf; SEC.uLine.value = ln;
+  scene.remove(cc); rt.dispose(); pmrem.dispose();
 };

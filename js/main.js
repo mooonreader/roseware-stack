@@ -5,15 +5,14 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { V, lerp, clamp, sstep, buildWater, buildClouds, DEPTH_HALF } from './world1.js';
-import { buildPalms } from './world2.js';
+import { V, lerp, clamp, sstep } from './world1.js';
 import { makeSkyDome, sunDirFromPx, rotForAzimuth, astro, nowMs, pickSky, LOOK, mvClock, phaseName } from './sky.js';
 import { CHAPTERS, PROJECTS, ICONS } from './content.js';
 import { AT } from './data.js';
 import { makeAudio } from './audio.js';
-import { loadHQ, SEC, FLOOR_Y } from './hq.js';
+import { loadHQ, SEC, FLOOR_Y, captureEnv } from './hq.js';
 import { loadPeople } from './people.js';
-import { buildCity, harbourDepth, buildMap, SHORE } from './city.js';
+import { loadMale, buildSky, buildChart, SEA_Y } from './male.js';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const N = CHAPTERS.length, RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -45,7 +44,7 @@ const TL = new THREE.TextureLoader(manager);
 let SKYMETA = null; const skyKey = pickSky(nowMs());
 const skyDome = makeSkyDome(); scene.add(skyDome.mesh);
 const sun = new THREE.DirectionalLight(0xffffff, 3); sun.castShadow = true; sun.shadow.mapSize.set(Q.shadow, Q.shadow); sun.shadow.bias = -.0004; sun.shadow.normalBias = .05; scene.add(sun, sun.target);
-{ const c = sun.shadow.camera; c.near = 1; c.far = 500; c.left = c.bottom = -45; c.right = c.top = 45; c.updateProjectionMatrix(); }
+{ const c = sun.shadow.camera; c.near = 1; c.far = 800; c.left = c.bottom = -45; c.right = c.top = 45; c.updateProjectionMatrix(); }
 const hemi = new THREE.HemisphereLight(0xcfe6ff, 0xe8dcc4, .35); scene.add(hemi);
 scene.fog = new THREE.FogExp2(0x9fc3df, .0003);
 const pmrem = new THREE.PMREMGenerator(renderer);
@@ -86,57 +85,51 @@ const grade = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uT: { valu
       col=mix(col,vec3(.03,.04,.05),uFade);gl_FragColor=vec4(col,1.);}` });
 composer.addPass(grade);
 
-/* ---------- the world ---------- */
-const water = buildWater(Q, U, harbourDepth(DEPTH_HALF)); water.material.uniforms.tDepth.value = harbourDepth(DEPTH_HALF);
-water.material.uniforms.uIsl.value.forEach(v => v.set(1e5, 1e5, 0, 1)); water.position.y = -1.1; scene.add(water);
-/* the sea starts at the seawall, so the section through the ground stays clear */
-water.geometry.dispose(); water.geometry = new THREE.PlaneGeometry(9000, 4500).rotateX(-Math.PI / 2).translate(0, 0, SHORE + .6 + 2250);
-const city = buildCity(scene, U, Q, TL);
-city.G.traverse(o => { if (o.isMesh) { const m = o.material; m.clippingPlanes = [SEC.fac]; } });
-const palms = buildPalms(scene, Q, U, city.palms);
-const clouds = buildClouds(Q, U); clouds.position.set(-30, 1100, -900); clouds.scale.setScalar(3); scene.add(clouds);
-const map = buildMap(scene, U);
-let HQ = null, PEOPLE = null;
+/* ---------- the world: Malé, the lagoon, clouds, the chart ---------- */
+const clouds = buildSky(Q, U); scene.add(clouds);
+const map = buildChart(scene, U);
+let HQ = null, PEOPLE = null, MALE = null;
 
 /* ---------- camera journey: [pos, target, stop, fov, roll] ---------- */
 const W = [
-  [[0, 1.62, 6.3], [0, 2.0, -5], 0, 52],
-  [[1.4, 1.68, 4.9], [-.6, 2.1, -5]],
-  [[4.6, 1.75, 2.6], [-1.2, 2.3, -4.9], 1, 50],
+  [[0, 1.62, 6.3], [0, 2.15, -5], 0, 52],
+  /* swing left past the lounge, then across the lobby */
+  [[-3.6, 2.35, 4.6], [.6, 1.9, -5], null, null, -.05], [[1.6, 1.8, 3.1], [-2.5, 2.0, -5]],
+  [[4.6, 1.75, 2.5], [-1.4, 2.25, -4.9], 1, 50],
   /* to the cut, then down the face of the section, through the slab, into the security centre */
-  [[3.9, 1.65, 5.6], [1.2, .9, -4]], [[3.1, .7, 7.7], [1.2, -1.2, -4], null, null, .08], [[3.1, -1.1, 7.7], [2.2, -2.5, -4], null, null, -.05],
+  [[5.8, 2.5, 5.6], [2, .4, -3], null, null, .1], [[4.2, .7, 8.3], [1, -1.1, -2], null, null, .22], [[2.2, -1.25, 8.5], [4, -2.6, -2], null, null, -.12], [[7.6, -1.6, 6.9], [1, -2.4, -2.8], null, null, .05],
   [[11.2, -1.7, 3.6], [.5, -2.5, -2.8], 2, 52],
   /* down again into the data hall, landing in a cold aisle */
-  [[8.5, -2.5, 6.8], [5, -6.2, -2], null, null, .14], [[6.0, -3.6, 7.7], [4.5, -6.4, -2], null, null, .1], [[4.0, -4.5, 7.8], [3.5, -6.6, -3], null, null, .08], [[3.2, -6.1, 7.2], [3.0, -6.8, -3], null, null, -.04],
+  [[9.8, -2.2, 7.5], [4, -6.6, 0], null, null, .2], [[5.4, -4.5, 8.5], [3, -6.8, -3], null, null, .08], [[3.4, -6.05, 7.4], [3.0, -6.8, -3], null, null, -.05],
   [[3.0, -6.5, 6.0], [3.0, -6.85, -4.5], 3, 56],
   /* and down to the power plant */
-  [[2.8, -7.4, 7.8], [2, -10.4, -2], null, null, -.1], [[.4, -9.3, 7.8], [-1, -11.6, -2], null, null, .18],
-  [[-4, -10.4, 6.9], [4, -11.6, 1]],
+  [[2.6, -7.2, 8.1], [1.5, -10.6, -2], null, null, -.16], [[.2, -9.4, 8.5], [-1, -11.6, -1], null, null, .24], [[-3.5, -10.5, 7.0], [5, -11.6, 1], null, null, .04],
   [[-5.2, -10.7, 1.0], [9, -11.6, .8], 4, 56],
-  /* back out through the cut and up: the whole section */
-  [[-4.5, -9.4, 10], [0, -6, 0]], [[6, -2, 26], [-2, 4, 0], null, null, -.07],
+  /* back out through the cut, swinging round: the whole section */
+  [[-4.2, -10.6, 9.5], [2, -10, -2], null, null, -.04], [[-6, -8.5, 24], [0, -5, 0], null, null, -.1], [[4, -1, 50], [-5, 3, 0], null, null, -.05],
   [[27, 3.5, 76], [-9.5, 5.2, 0], 5, 43],
   /* the section heals, and we fly in through the glass to the engineers */
-  [[9, 7.6, 21], [0, 6.7, -2]], [[2.4, 7.1, 9.4], [1, 6.8, -4]],
+  [[15, 7.6, 36], [0, 6.6, -2], null, null, .06], [[4.5, 7.2, 12.5], [1, 6.8, -4], null, null, .08],
   [[-1.0, 7.1, 6.0], [6, 6.5, -3.6], 6, 52],
-  /* up through the ceiling to the boardroom, turn, and out of the balcony door */
-  [[1.0, 7.9, .6], [1.5, 11, -6], null, null, .1], [[1.5, 10.2, -1.6], [1.5, 11.2, 6], null, null, -.15], [[1.5, 11.15, 6.4], [1.5, 10.9, 14]], [[1.5, 11.1, 9.7], [1.5, 10.4, 20]],
-  [[9, 16, 31], [2, 12, 0], null, null, -.08],
-  [[34, 22, 62], [9, 13, 0], 7, 42],
+  /* up through the ceiling to the boardroom, turn, out of the balcony door, and out over Malé */
+  [[1.0, 7.9, .6], [1.5, 11, -6], null, null, .12], [[1.5, 10.2, -1.6], [1.5, 11.2, 6], null, null, -.18], [[.75, 11.15, 6.4], [.75, 10.9, 14]], [[.75, 11.1, 9.8], [.75, 10.6, 20]],
+  [[4.5, 17, 19], [0, 12, 0], null, null, -.14], [[16, 30, 36], [0, 12, 0], null, null, -.06],
+  [[36, 40, 62], [9, 12, 0], 7, 42],
   /* rise through the cloud to the atolls */
-  [[70, 160, 170], [0, 0, 0]], [[260, 1700, 1300], [0, 0, 200]],
-  [[-1250, 8200, 2500], [-1350, 0, 250], 8, 45],
-  [[-300, 900, 1100], [0, 0, 0]], [[-20, 30, 120], [-10, 10, 0]],
-  [[-9, 3.2, 74], [-17, 13, 0], 9, 46],
+  [[110, 230, 300], [0, 0, 0], null, null, .04], [[480, 2100, 2000], [0, 0, -300]], [[5200, 21000, 15000], [-1500, 0, 4000], null, null, -.05], [[20000, 230000, 160000], [30000, 0, 90000]],
+  [[-110000, 1150000, 430000], [-125000, 0, 115000], 8, 45],
+  /* and back down to the street corner outside the office */
+  [[6000, 40000, 30000], [0, 0, 0]], [[500, 1600, 1500], [0, 0, 0], null, null, .05], [[60, 90, 120], [0, 10, 0]], [[30, 12, 42], [0, 12, 0], null, null, .06],
+  [[19.5, 2.1, 17.5], [-.5, 12.5, 0], 9, 52],
 ];
-const PORTRAIT = { 1: [-.6, 2.3, -4.9], 2: [3, -2.5, -3], 3: [3, -6.85, -4.5], 4: [5, -11.6, 1.2], 5: [0, 5.2, 0], 6: [4, 6.5, -3.6], 7: [0, 13, 0], 8: [-300, 0, 700], 9: [0, 13, 0] };
+const PORTRAIT = { 0: [0, 4.4, -5], 1: [-.6, 2.3, -4.9], 2: [3, -2.5, -3], 3: [3, -6.85, -4.5], 4: [5, -11.6, 1.2], 5: [0, 5.2, 0], 6: [4, 6.5, -3.6], 7: [0, 13, 0], 8: [-25000, 0, -70000], 9: [0, 13, 0] };
 const posC = new THREE.CatmullRomCurve3(W.map(w => V(...w[0])), false, 'centripetal', .5), tgtC = new THREE.CatmullRomCurve3(W.map(w => V(...w[1])), false, 'centripetal', .5);
 const rollC = new THREE.CatmullRomCurve3(W.map((w, i) => V(w[4] || 0, i, 0)), false, 'catmullrom', .5);
 const tgtM = new THREE.CatmullRomCurve3(W.map(w => V(...(w[2] != null && PORTRAIT[w[2]] ? PORTRAIT[w[2]] : w[1]))), false, 'centripetal', .5), camTM = V(0, 0, 0), rv = V(0, 0, 0);
 const stopIdx = W.map((w, i) => w[2] != null ? i : -1).filter(i => i >= 0), fovAt = stopIdx.map(i => W[i][3] || 50);
 const LUT = []; { const nW = W.length - 1;
-  for (let k = 0; k < N - 1; k++) { const a = stopIdx[k] / nW, b = stopIdx[k + 1] / nW, S = 300, L = [0]; let pp = posC.getPoint(a), pt = tgtC.getPoint(a);
-    for (let i = 1; i <= S; i++) { const t = lerp(a, b, i / S), p = posC.getPoint(t), q = tgtC.getPoint(t); L.push(L[i - 1] + Math.pow(p.distanceTo(pp), .8) + .25 * Math.pow(q.distanceTo(pt), .8)); pp = p; pt = q; }
+  for (let k = 0; k < N - 1; k++) { const a = stopIdx[k] / nW, b = stopIdx[k + 1] / nW, S = 900, L = [0]; let pp = posC.getPoint(a), pt = tgtC.getPoint(a);
+    for (let i = 1; i <= S; i++) { const t = lerp(a, b, i / S), p = posC.getPoint(t), q = tgtC.getPoint(t); const h = Math.max(8, (p.y + pp.y) / 2); L.push(L[i - 1] + p.distanceTo(pp) / h + .3 * q.distanceTo(pt) / Math.max(h, 12)); pp = p; pt = q; }
     LUT.push({ a, b, L, tot: L[S] }); } }
 const tAt = P => { const k = Math.min(N - 2, Math.max(0, Math.floor(P))), f = clamp(P - k), l = LUT[k], tgt = f * l.tot; let lo = 0, hi = l.L.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (l.L[m] < tgt) lo = m; else hi = m; } const ff = (tgt - l.L[lo]) / ((l.L[hi] - l.L[lo]) || 1); return lerp(l.a, l.b, (lo + ff) / (l.L.length - 1)); };
 const camP = V(0, 0, 0), camT = V(0, 0, 0);
@@ -144,8 +137,9 @@ const camP = V(0, 0, 0), camT = V(0, 0, 0);
 /* the section cut over the journey: where the floors are cut, where the facade/city are cut */
 const OFF = 60, CUT = 6.6;
 const ramp = (P, a, b) => sstep(a, b, P);
-const secLv = P => { const on = ramp(P, 1.05, 1.6) * (1 - ramp(P, 5.25, 5.75)); return lerp(OFF, CUT, on); };
-const secFac = P => { const on = ramp(P, 4.25, 4.85) * (1 - ramp(P, 5.55, 5.85)); return lerp(OFF, CUT, on); };
+const secLv = P => { const on = ramp(P, 1.02, 1.2) * (1 - ramp(P, 5.25, 5.75)); return lerp(OFF, CUT, on); };
+/* the city in front of the cut comes back only once the camera is clear of it, over the street */
+const secFac = (P, cz) => { const on = ramp(P, 4.25, 4.85) * (P < 5.3 ? 1 : 1 - ramp(P, 5.3, 6.2) * (1 - sstep(15.5, 21, cz))); return lerp(OFF, CUT, on); };
 
 /* ---------- scroll: smooth spring, magnetic stops, one-flight jumps ---------- */
 let P = 0, PT_ = 0, vel = 0, lastIn = -1e9, lastDir = 1, snapped = true, tween = null, drawer = false, entered = false, touching = false;
@@ -211,18 +205,22 @@ addEventListener('pointermove', e => { if (e.pointerType === 'mouse') ptr = { x:
   if (drag && e.pointerType === 'mouse') { look.held = true; look.x = clamp((e.clientX - drag.x) / innerWidth * 1.6, -.7, .7); look.y = clamp((e.clientY - drag.y) / innerHeight * .9, -.35, .35); } }, { passive: true });
 canvas.addEventListener('pointerdown', e => { ptr = { x: e.clientX / innerWidth * 2 - 1, y: -(e.clientY / innerHeight) * 2 + 1, tap: true, m: e.pointerType === 'mouse' }; if (e.pointerType === 'mouse') { drag = { x: e.clientX, y: e.clientY }; document.body.classList.add('grabbing'); } });
 addEventListener('pointerup', () => { if (drag) { drag = null; look.held = false; document.body.classList.remove('grabbing'); } });
-let ripT = -9;
+let ripT = -9, LANDC = null, LANDB = null;
+const landCanvas = D => { const f = D.isl[D.male]; let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (let i = 0; i < f.length - 1; i += 2) { a = Math.min(a, f[i]); b = Math.max(b, f[i]); c = Math.min(c, f[i + 1]); d = Math.max(d, f[i + 1]); }
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 512; const x = cv.getContext('2d'); LANDB = [a - 400, b + 400, c - 400, d + 400]; const S = 512 / (LANDB[1] - LANDB[0]), T = 512 / (LANDB[3] - LANDB[2]);
+  D.isl.forEach(g => { x.beginPath(); for (let i = 0; i < g.length - 1; i += 2) { const px = (g[i] - LANDB[0]) * S, pz = (g[i + 1] - LANDB[2]) * T; i ? x.lineTo(px, pz) : x.moveTo(px, pz); } x.closePath(); x.fillStyle = '#fff'; x.fill(); }); LANDC = x.getImageData(0, 0, 512, 512).data; };
+const isLand = (wx, wz) => { if (!LANDC) return false; const i = Math.floor((wx - LANDB[0]) / (LANDB[1] - LANDB[0]) * 512), j = Math.floor((wz - LANDB[2]) / (LANDB[3] - LANDB[2]) * 512); if (i < 0 || j < 0 || i > 511 || j > 511) return false; return LANDC[(j * 512 + i) * 4] > 128; };
 const pointerUpdate = t => { if (!ptr || !entered) return; nd.set(ptr.x, ptr.y); ray.setFromCamera(nd, camera);
   if (ptr.tap) {
     if (PEOPLE) { const hits = ray.intersectObjects(PEOPLE.people.filter(p => p.wrap.visible).map(p => p.wrap), true); if (hits.length && hits[0].distance < 30) { let o = hits[0].object; const p = PEOPLE.people.find(pp => { let q = o; while (q) { if (q === pp.wrap) return true; q = q.parent; } return false; }); if (p) p.poke = t; } }
     if (Math.abs(P - CH('projects')) < .4) { const hits = ray.intersectObjects(map.pins.map(p => p.grp), true); if (hits.length) { const pin = map.pins.find(p => { let q = hits[0].object; while (q) { if (q === p.grp) return true; q = q.parent; } return false; }); if (pin) openDrawer(CH('projects'), pin.id); } }
   }
-  const o = ray.ray.origin, d = ray.ray.direction; if (d.y < -.01 && o.y > 0) { const k = (-1.1 - o.y) / d.y, x = o.x + d.x * k, z = o.z + d.z * k; if (z > SHORE + 1 && k < 400 && (ptr.tap || t - ripT > .6)) { U.uRip.value.set(x, z, U.uT.value); ripT = t; } }
+  const o = ray.ray.origin, d = ray.ray.direction; if (d.y < -.01 && o.y > 0) { const k = (SEA_Y - o.y) / d.y, x = o.x + d.x * k, z = o.z + d.z * k; if (MALE && k < 600 && (ptr.tap || t - ripT > .6) && !isLand(x, z)) { U.uRip.value.set(x, z, U.uT.value); ripT = t; } }
   ptr.tap = false; ptr = ptr.m ? ptr : null; };
 
 /* ---------- resize & adaptive quality ---------- */
 let dpr = Q.dpr; const resize = () => { const w = innerWidth, h = innerHeight; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setPixelRatio(dpr); renderer.setSize(w, h, false); composer.setPixelRatio(dpr); composer.setSize(w, h); grade.uniforms.uAsp.value = w / h;
-  if (water.getRenderTarget) water.getRenderTarget().setSize(Math.round(w * Q.refl * Math.min(dpr, 1.5)), Math.round(h * Q.refl * Math.min(dpr, 1.5))); document.body.classList.toggle('narrow', w < 760); };
+  if (MALE && MALE.sea.getRenderTarget) MALE.sea.getRenderTarget().setSize(Math.round(w * Q.refl * Math.min(dpr, 1.5)), Math.round(h * Q.refl * Math.min(dpr, 1.5))); document.body.classList.toggle('narrow', w < 760); };
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 300));
 let ft = 0, fn = 0, slowT = 0, fastT = 0; const perf = dt => { if (document.hidden || dt > .2) { ft = 0; fn = 0; return; } ft += dt; fn++; if (fn < 30) return; const a = ft / fn; ft = 0; fn = 0;
   if (a > 1 / 40) { slowT++; fastT = 0; if (slowT > 1 && dpr > .75) { dpr = Math.max(.75, dpr - .15); resize(); slowT = 0; } } else if (a < 1 / 57) { fastT++; slowT = 0; if (fastT > 4 && dpr < Q.dpr) { dpr = Math.min(Q.dpr, dpr + .1); resize(); fastT = 0; } } else { slowT = fastT = 0; } };
@@ -236,7 +234,7 @@ let swapping = false; const swapSky = k => { swapping = true; loadSky(k).then(a 
 /* ---------- which floors to draw ---------- */
 const LVY = { B3: [-12.6, -8.4], B2: [-8.4, -4.2], B1: [-4.2, 0], G: [0, 5.4], L1: [5.4, 9.6], L2: [9.6, 13.8], L3: [13.8, 18], L4: [18, 22.2], L5: [22.2, 26.4], ROOF: [26.4, 32] };
 const FLOOR_NAME = { B3: 'Basement 3 · Power & cooling', B2: 'Basement 2 · Data hall', B1: 'Basement 1 · Security operations', G: 'Ground · Lobby', L1: 'Level 1 · Engineering', L2: 'Level 2 · Boardroom' };
-let insideK = 0, curFloor = '';
+let insideK = 0, curFloor = '', expoK = .55;
 const levelVisible = (lv, camPos, inside) => { if (lv === 'FACADE') return !inside || camPos.y > -.5; if (lv === 'OUT') return camPos.y > -.5 && !inside; if (!inside) return true; const r = LVY[lv]; return camPos.y > r[0] - 4.6 && camPos.y < r[1] + 4.6; };
 
 /* ---------- frame ---------- */
@@ -252,25 +250,35 @@ const frame = now => {
   if (!look.held) { look.x *= Math.exp(-dt * 2.2); look.y *= Math.exp(-dt * 2.2); }
   const hx = FINE && ptr && entered && !drawer && !drag ? (ptr.x || 0) * .05 : 0, hy = FINE && ptr && entered && !drawer && !drag ? (ptr.y || 0) * .03 : 0;
   fwd.subVectors(camT, camP); const dist = fwd.length(); fwd.normalize(); right.crossVectors(fwd, UP).normalize(); upv.crossVectors(right, fwd);
-  const yaw = look.x + hx, pitch = -look.y + hy; camT.copy(camP).addScaledVector(fwd, dist * Math.cos(yaw)).addScaledVector(right, dist * Math.sin(yaw)).addScaledVector(upv, dist * Math.sin(pitch));
+  const rest = clamp(1 - Math.abs(P - Math.round(P)) * 5) * (RM ? 0 : 1);
+  const yaw = look.x + hx + rest * Math.sin(t * .42) * .04, pitch = -look.y + hy + rest * Math.sin(t * .29 + 1) * .014; camT.copy(camP).addScaledVector(fwd, dist * Math.cos(yaw)).addScaledVector(right, dist * Math.sin(yaw)).addScaledVector(upv, dist * Math.sin(pitch));
   camP.y += Math.sin(t * .5) * .012 * (camP.y < 30 ? 1 : 0);
   camera.position.copy(camP); camera.up.set(0, 1, 0); camera.lookAt(camT); camera.rotateZ(rv.x);
-  const alt = camP.y; camera.near = alt > 2000 ? 20 : alt > 200 ? 2 : alt > 40 ? .3 : .05; camera.far = alt > 2000 ? 40000 : 9000; camera.updateProjectionMatrix();
+  const alt = camP.y; camera.near = clamp(alt * .002, .05, 4000); if (alt < 40) camera.near = .05; camera.far = Math.max(12000, alt * 6); camera.updateProjectionMatrix();
   /* section planes */
-  const sl = secLv(P), sf = secFac(P); SEC.lv.constant = sl; SEC.fac.constant = sf; SEC.uLv.value = sl; SEC.uFac.value = sf; SEC.uLine.value = sl < 20 ? 1 : 0;
+  const sl = secLv(P), sf = secFac(P, camP.z); SEC.lv.constant = sl; SEC.fac.constant = sf; SEC.uLv.value = sl; SEC.uFac.value = sf; SEC.uLine.value = sl < 20 ? 1 : 0;
   /* inside the building? */
   const inside = Math.abs(camP.x) < 12.2 && camP.z < 8.4 && camP.z > -8.4 && camP.y < 26.4 && camP.y > -13;
   insideK = lerp(insideK, inside ? 1 : 0, 1 - Math.exp(-dt * 3));
   /* exposure: interiors a touch brighter, night city darker */
-  renderer.toneMappingExposure = LOOKNOW.exp * lerp(1, SKYKEY === 'night' ? 1.35 : 1.05, insideK);
-  scene.fog.density = LOOKNOW.fogD * clamp(160 / Math.max(alt, 1), .02, 1) * (1 - insideK); U.uFogD.value = scene.fog.density * 1.15;
+  /* eye adaptation: each floor has its own exposure (daylit offices are ~10x brighter than the plant room) */
+  const nearB = Math.abs(camP.x) < 22 && camP.z < 14 && camP.y < 28;
+  const ex = camP.y < -8.4 ? 2.4 : camP.y < -4.2 ? lerp(2.4, 1.9, sstep(-8.9, -7.9, camP.y)) : camP.y < 0 ? lerp(1.9, 1.15, sstep(-4.7, -3.7, camP.y)) : lerp(lerp(1.15, .46, sstep(-.5, .8, camP.y)), .4, sstep(5, 6, camP.y));
+  expoK = lerp(expoK, nearB ? ex : 1, 1 - Math.exp(-dt * 2.5));
+  renderer.toneMappingExposure = LOOKNOW.exp * expoK * (SKYKEY === "night" && nearB && camP.y > 0 ? 1.6 : 1);
+  scene.fog.density = LOOKNOW.fogD * clamp(Math.pow(90 / Math.max(alt, 1), 1.3), .0005, 1) * (1 - insideK); U.uFogD.value = scene.fog.density * 1.15;
   /* chapter effects */
   const near = c => clamp(1 - Math.abs(P - c) / .8);
-  const pj = near(CH('projects')); map.mesh.material.opacity = sstep(1500, 4500, alt) * .95; map.beamM.uniforms.uA.value = map.mesh.material.opacity; map.sea.material.opacity = sstep(1200, 4200, alt) * .97; map.sea.visible = map.mesh.visible = map.sea.material.opacity > .005;
-  map.pins.forEach((p, i) => { p.grp.visible = map.mesh.material.opacity > .01; const s = 1 + Math.sin(t * 2.2 + i) * .25; p.ring.scale.setScalar(s * (1 + pj)); p.ring.material.opacity = (1.2 - s * .6) * map.mesh.material.opacity; p.dot.material.opacity = map.mesh.material.opacity; });
-  U.uCloudA.value = sstep(250, 900, alt) * (1 - sstep(2600, 5000, alt)); clouds.visible = U.uCloudA.value > .01;
-  const high = alt > 2600; city.G.visible = !high && (!inside || camP.y > -.5); if (HQ) HQ.root.visible = !high; if (PEOPLE) PEOPLE.root.visible = !high;
-  water.visible = (!inside || camP.y > -.5) && sf > 20 && map.sea.material.opacity < .9; palms.forEach(m => m.visible = sf > 20 && !high);
+  const pj = near(CH('projects'));
+  /* the chart fades in above ~30 km; the lagoon and city give way to it */
+  const chA = sstep(28000, 95000, alt), ocA = sstep(40000, 140000, alt); map.mesh.material.opacity = chA; map.ocean.material.uniforms.uA.value = ocA; map.mesh.visible = chA > .003; map.ocean.visible = ocA > .003; map.beamM.uniforms.uA.value = chA;
+  map.pins.forEach((p, i) => { p.grp.visible = chA > .01; const s = 1 + Math.sin(t * 2.2 + i) * .25, sz = alt * .011; p.ring.scale.setScalar(sz * s * (1 + pj * .5)); p.ring.material.opacity = (1.2 - s * .6) * chA; p.dot.scale.setScalar(sz * .45); p.dot.position.y = sz * .3; p.dot.material.opacity = chA;
+    p.beam.scale.set(alt * .0016, alt * .2, alt * .0016); p.P.y = sz * .5; });
+  U.uCloudA.value = sstep(450, 1000, alt) * (1 - sstep(9000, 45000, alt)); clouds.visible = U.uCloudA.value > .01;
+  const high = alt > 4000, vhigh = alt > 60000;
+  if (MALE) { const outside = (!inside || camP.y > -.5) && !(sl < 20 && camP.y < 3 && sf > 20); MALE.G.visible = outside && !vhigh; MALE.osm.visible = MALE.fill.visible = !high; const useRefl = outside && alt < 1600 && sf > 20; MALE.sea.visible = useRefl; MALE.flat.visible = outside && !useRefl && ocA < .99 && (sf > 20 || alt > 200); }
+  if (HQ) HQ.root.visible = !high; if (PEOPLE) PEOPLE.root.visible = !high;
+  bloom.threshold = lerp(.92, 1.45, insideK);
   if (HQ) {
     for (const n in HQ.LV) HQ.LV[n].grp.visible = levelVisible(n, camP, inside);
     HQ.update(t, camP.y, inside); const nl = LOOKNOW.night; HQ.NIGHTGLOW.forEach(([m, d, n2]) => m.color.setScalar(lerp(d, n2, nl)));
@@ -280,10 +288,10 @@ const frame = now => {
   let fl = ''; if (inside) for (const n in LVY) { const r = LVY[n]; if (camP.y >= r[0] && camP.y < r[1]) fl = n; }
   if (fl !== curFloor) { curFloor = fl; floorEl.textContent = FLOOR_NAME[fl] || ''; floorEl.classList.toggle('on', !!FLOOR_NAME[fl] && entered); }
   /* sun shadows: the building and the plaza */
-  shadowFocus.set(0, 0, 6); const half = alt > 200 ? 120 : 45, sc = sun.shadow.camera;
+  shadowFocus.set(0, 0, 6); const half = alt > 60 ? 140 : 50, sc = sun.shadow.camera;
   if (sc.right !== half) { sc.left = sc.bottom = -half; sc.right = sc.top = half; sc.updateProjectionMatrix(); }
   const sd = U.uSunDir.value, ts = 2 * half / Q.shadow; sR.crossVectors(sd, UP).normalize(); sU.crossVectors(sR, sd).normalize(); const r0 = shadowFocus.dot(sR), u0 = shadowFocus.dot(sU); shadowFocus.addScaledVector(sR, Math.round(r0 / ts) * ts - r0).addScaledVector(sU, Math.round(u0 / ts) * ts - u0);
-  sun.target.position.copy(shadowFocus); sun.position.copy(shadowFocus).addScaledVector(sd, 200); sun.castShadow = !inside;
+  sun.target.position.copy(shadowFocus); sun.position.copy(shadowFocus).addScaledVector(sd, 300); sun.castShadow = !inside && alt < 500;
   /* DOM */
   const c = Math.round(P);
   if (c !== curC) { curC = c; $$('.ri').forEach((b, i) => { b.classList.toggle('on', i === c); b.toggleAttribute('aria-current', i === c); }); document.body.dataset.c = c; }
@@ -304,8 +312,9 @@ const cp = new URLSearchParams(location.search).get('c'); if (cp) { P = PT_ = cl
 fetch('assets/index.json').then(r => r.json()).then(j => { SKYMETA = j; return loadSky(skyKey); }).then(async a => {
   applySky(...a); updChip(); resize(); requestAnimationFrame(frame);
   const tick = () => { loaderBar.style.transform = `scaleX(${Math.max(.08, loadP)})`; if (!bootOk) setTimeout(tick, 80); }; tick();
-  const [hq, ppl] = await Promise.all([loadHQ({ manager, TL, U, Q }), loadPeople({ manager, U, scene }).catch(e => { console.warn('people', e); return null; })]);
-  HQ = hq; scene.add(HQ.root); PEOPLE = ppl;
+  const [hq, ppl, male] = await Promise.all([loadHQ({ manager, TL, U, Q }), loadPeople({ manager, U, scene }).catch(e => { console.warn('people', e); return null; }), loadMale({ scene, U, Q, TL })]);
+  HQ = hq; scene.add(HQ.root); PEOPLE = ppl; MALE = male; landCanvas(male.D);
+  try { captureEnv(renderer, scene, HQ, [male.G, male.sea, male.flat, ppl ? ppl.root : male.G, clouds, map.mesh, map.ocean, skyDome.mesh]); } catch (e) { console.warn('env', e); }
   renderer.compile(scene, camera); bootOk = true; loaderBar.style.transform = 'scaleX(1)'; document.body.classList.add('ready'); if (new URLSearchParams(location.search).has('auto')) enter();
 }).catch(e => { console.error(e); fail('The scene could not load. Please refresh.'); });
 window.__dbg = { get P() { return P; }, set P(v) { P = PT_ = v; }, jump, U, camera, scene, renderer, composer, SEC, get HQ() { return HQ; }, get PEOPLE() { return PEOPLE; } };
