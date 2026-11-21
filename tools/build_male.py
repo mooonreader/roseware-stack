@@ -109,6 +109,8 @@ for k in inhabited:
                 r = random.random()
                 fl = (3 + int(r * r * 4) + (random.random() < .55) * random.randint(2, 6)) if k == male_k else int(3 + random.random() ** 1.6 * 14 * tall)
                 h = round(fl * 3.1 + random.uniform(0, 1.2), 1)
+                dd = math.hypot(mx, mz)
+                if dd < 130: h = round(min(h, 9 + dd * .12 + random.uniform(0, 4)), 1)   # keep the RoseWare block readable from the street and the air
                 fills.append([round(mx, 1), round(mz, 1), round(cw - 1.2, 1), round(cd - 1.2, 1), h, round(ang, 1)]); n += 1
             v += cd
         u += cw
@@ -121,6 +123,8 @@ for h, kind, mh, P in osmb:
     c = (sum(p[0] for p in P) / len(P), sum(p[1] for p in P) / len(P))
     if abs(c[0]) < 16 and abs(c[1]) < 12: continue
     if not h: h = round(random.choice([9, 12, 15, 18, 21, 24, 27, 30, 33]) + random.uniform(0, 2), 1)
+    dd = math.hypot(*c)
+    if dd < 130: h = min(h, 9 + dd * .12 + random.uniform(0, 4))
     bd.append([round(h, 1), round(mh, 1)] + q(P))
 
 # Sinamalé bridge deck (centre line + width) from the bridge outline

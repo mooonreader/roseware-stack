@@ -398,9 +398,9 @@ def build_FACADE():
     # L2 balcony
     boxr(lv, M['concrete'], -.5, 3.5, Y0 - 2.2, Y0, Z['L2'] - .3, Z['L2'] + .02); box(lv, M['glass'], (4., .03, 1.1), (1.5, Y0 - 2.18, Z['L2'] + .55), name='balcony_glass')
     # soil around the basements (shows in section)
-    for (x0, x1, y0, y1) in ((-40, 40, -26, Y0 - .4), (-40, 40, Y1 + .4, 26), (-40, X0 - .4, Y0 - .4, Y1 + .4), (X1 + .4, 40, Y0 - .4, Y1 + .4)):
+    for (x0, x1, y0, y1) in ((-70, 70, -26, Y0 - .4), (-70, 70, Y1 + .4, 40), (-70, X0 - .4, Y0 - .4, Y1 + .4), (X1 + .4, 70, Y0 - .4, Y1 + .4)):
         boxr(lv, M['soil'], x0, x1, y0, y1, -13.2, -.03)
-    boxr(lv, M['soil'], -40, 40, -26, 26, -14.2, -13.2)
+    boxr(lv, M['soil'], -70, 70, -26, 40, -14.2, -13.2)
 
 BUILD = dict(B3=build_B3, B2=build_B2, B1=build_B1, G=build_G, L1=build_L1, L2=build_L2, L3=lambda: build_upper('L3'), L4=lambda: build_upper('L4'), L5=lambda: build_upper('L5'), ROOF=build_ROOF, FACADE=build_FACADE)
 for k, f in BUILD.items(): f()
