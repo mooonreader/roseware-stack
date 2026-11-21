@@ -1,0 +1,154 @@
+{
+ "potted_plant_01": {
+  "name": "Potted Plant 01",
+  "categories": [
+   "decorative",
+   "plants",
+   "potted plants",
+   "nature"
+  ],
+  "authors": [
+   "Rico Cilliers"
+  ]
+ },
+ "potted_plant_02": {
+  "name": "Potted Plant 02",
+  "categories": [
+   "decorative",
+   "plants",
+   "potted plants",
+   "nature"
+  ],
+  "authors": [
+   "Rico Cilliers"
+  ]
+ },
+ "potted_plant_04": {
+  "name": "Potted Plant 04",
+  "categories": [
+   "decorative",
+   "plants",
+   "potted plants",
+   "succulent",
+   "nature"
+  ],
+  "authors": [
+   "James Ray Cock"
+  ]
+ },
+ "modern_arm_chair_01": {
+  "name": "Modern Arm Chair 01",
+  "categories": [
+   "furniture",
+   "seating",
+   "office"
+  ],
+  "authors": [
+   "Vibrant Nordic"
+  ]
+ },
+ "ArmChair_01": {
+  "name": "Arm Chair 01",
+  "categories": [
+   "furniture",
+   "seating"
+  ],
+  "authors": [
+   "Kirill Sannikov"
+  ]
+ },
+ "Sofa_01": {
+  "name": "Sofa 01",
+  "categories": [
+   "furniture",
+   "seating"
+  ],
+  "authors": [
+   "Kirill Sannikov"
+  ]
+ },
+ "sofa_02": {
+  "name": "Sofa 02",
+  "categories": [
+   "furniture",
+   "seating"
+  ],
+  "authors": [
+   "Kirill Sannikov"
+  ]
+ },
+ "GreenChair_01": {
+  "name": "Green Chair 01",
+  "categories": [
+   "furniture",
+   "seating"
+  ],
+  "authors": [
+   "Kirill Sannikov"
+  ]
+ },
+ "coffee_table_round_01": {
+  "name": "Coffee Table Round 01",
+  "categories": [
+   "furniture",
+   "table"
+  ],
+  "authors": [
+   "Ulan Cabanilla"
+  ]
+ },
+ "WoodenTable_01": {
+  "name": "Wooden Table 01",
+  "categories": [
+   "furniture"
+  ],
+  "authors": [
+   "Ethan Place"
+  ]
+ },
+ "desk_lamp_arm_01": {
+  "name": "Desk Lamp Arm 01",
+  "categories": [
+   "lighting",
+   "rigged",
+   "collection: the_shed"
+  ],
+  "authors": [
+   "Yann Kervran",
+   "Kuutti Siitonen"
+  ]
+ },
+ "Rockingchair_01": {
+  "name": "Rockingchair 01",
+  "categories": [
+   "furniture",
+   "seating"
+  ],
+  "authors": [
+   "Jorge Camacho"
+  ]
+ },
+ "adjustable_wrench": {
+  "name": "Adjustable Wrench",
+  "categories": [
+   "collection: project_lighthouse",
+   "props",
+   "industrial",
+   "tools"
+  ],
+  "authors": [
+   "Mateusz Sadek"
+  ]
+ },
+ "antique_ceramic_vase_01": {
+  "name": "Antique Ceramic Vase 01",
+  "categories": [
+   "decorative",
+   "containers",
+   "vases"
+  ],
+  "authors": [
+   "James Ray Cock"
+  ]
+ }
+}
