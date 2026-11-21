@@ -39,9 +39,10 @@ M = dict(
   # emissive (not baked; they light the bake)
   light=mat('M_light', (1, 1, 1), .5, 0, (1, .96, .9), 14.), light_cool=mat('M_light_cool', (1, 1, 1), .5, 0, (.85, .92, 1), 9.), led_blue=mat('M_led_blue', (0, 0, 0), .5, 0, (.25, .5, 1), 8.),
   led_red=mat('M_led_red', (0, 0, 0), .5, 0, (1, .1, .06), 10.), screen=mat('M_screen', (0, 0, 0), .3, 0, (.35, .55, 1), 3.), logo=mat('M_logo', (1, 1, 1), .4, 0, (1, .2, .15), 4.),
-  glass=mat('M_glass', (.9, .95, 1), .02, 0, None, 0, 1, 1.), glass_frost=mat('M_glass_frost', (.95, .97, 1), .3, 0, None, 0, 1, .9),
+  glass=mat('M_glass', (.9, .95, 1), .02, 0, None, 0, .12, 0.), glass_frost=mat('M_glass_frost', (.95, .97, 1), .3, 0, None, 0, .35, 0.),
+  epoxy=mat('M_floor_epoxy', lin('bdb9b2'), .28), light_soft=mat('M_light_soft', (1, 1, 1), .5, 0, (1, .97, .92), 5.),
 )
-EMISSIVE = {'M_light', 'M_light_cool', 'M_led_blue', 'M_led_red', 'M_screen', 'M_logo', 'M_rack_front'}
+EMISSIVE = {'M_light', 'M_light_soft', 'M_light_cool', 'M_led_blue', 'M_led_red', 'M_screen', 'M_logo', 'M_rack_front'}
 SEPARATE = EMISSIVE | {'M_glass', 'M_glass_frost'}
 
 # ---------------------------------------------------------------- geometry accumulator per level
@@ -305,7 +306,7 @@ def build_G():
 def office_floor(lv, people_desks=True, dense=True):
     z0 = Z[lv]; z1 = TOP[lv] - SLAB; cz = z1 - .55
     slab(lv, z0); core(lv, z0, z1); columns(lv, z0, cz, skip=((0., -4.), (0., 2.5)))
-    boxr(lv, M['carpet'], X0, X1, Y0, Y1, z0, z0 + .02)
+    boxr(lv, M['epoxy'], X0, X1, Y0, Y1, z0, z0 + .02)
     clusters = [(-3., -4.6), (3.6, -4.6), (-3., -.6), (3.6, -.6), (9.6, -2.6)] if dense else [(-2., -4.), (5., -4.)]
     for (cx, cy) in clusters:
         for i in range(3):
@@ -313,7 +314,7 @@ def office_floor(lv, people_desks=True, dense=True):
     boxr(lv, M['white'], X0, X1, Y0, Y1, cz, cz + .04); ceiling_lines(lv, cz)
     void_services(lv, cz + .04, z1)
 def ceiling_lines(lv, cz):
-    for y in (-6.4, -3.2, 0., 3.2, 6.4): box(lv, M['light'], (17., .1, .03), (2.5, y, cz - .02))
+    for y in (-6.4, -3.2, 0., 3.2, 6.4): box(lv, M['light_soft'], (17., .1, .03), (2.5, y, cz - .02))
 def build_L1():
     lv = 'L1'; office_floor(lv); z0 = Z[lv]
     # glass meeting pod
@@ -327,7 +328,7 @@ def build_L1():
 def build_L2():
     lv = 'L2'; z0 = Z[lv]; z1 = TOP[lv] - SLAB; cz = z1 - .55
     slab(lv, z0); core(lv, z0, z1); columns(lv, z0, cz, skip=((0., 2.5), (6., 2.5)))
-    boxr(lv, M['carpet'], X0, X1, Y0, Y1, z0, z0 + .02); boxr(lv, M['timber'], -6., X1, 1.2, Y1, z0 + .02, z0 + .03)
+    boxr(lv, M['epoxy'], X0, X1, Y0, Y1, z0, z0 + .02); boxr(lv, M['timber'], -6., X1, 1.2, Y1, z0 + .02, z0 + .03)
     # boardroom
     box(lv, M['white_gloss'], (6.4, 1.8, .06), (3., 4.4, z0 + .74), bevel=.03); box(lv, M['metal_dark'], (5.0, .3, .72), (3., 4.4, z0 + .36))
     for k in range(5):
@@ -432,9 +433,10 @@ print('SPECIAL OBJECTS', len(SPECIAL_OBJS))
 
 # world + sun for the bake of above-ground floors
 world = bpy.data.worlds.new('W'); scn.world = world; world.use_nodes = True
-bg = world.node_tree.nodes['Background']; sky = world.node_tree.nodes.new('ShaderNodeTexSky'); sky.sky_type = 'NISHITA'; sky.sun_elevation = math.radians(52); sky.sun_rotation = math.radians(200); sky.sun_intensity = .35
-world.node_tree.links.new(sky.outputs['Color'], bg.inputs['Color']); bg.inputs['Strength'].default_value = .5
-sun = bpy.data.lights.new('Sun', 'SUN'); sun.energy = 3.5; sun.angle = math.radians(2); so = bpy.data.objects.new('Sun', sun); scn.collection.objects.link(so); so.rotation_euler = (math.radians(38), 0, math.radians(200))
+bg = world.node_tree.nodes['Background']; sky = world.node_tree.nodes.new('ShaderNodeTexSky'); sky.sky_type = 'NISHITA'; sky.sun_elevation = math.radians(48); sky.sun_rotation = math.radians(140); sky.sun_intensity = .5
+world.node_tree.links.new(sky.outputs['Color'], bg.inputs['Color']); bg.inputs['Strength'].default_value = .9
+sun = bpy.data.lights.new('Sun', 'SUN'); sun.energy = 5.5; sun.angle = math.radians(1.2); so = bpy.data.objects.new('Sun', sun); scn.collection.objects.link(so)
+so.rotation_euler = Vector((-.55, .62, -.56)).normalized().to_track_quat('-Z', 'Y').to_euler()   # low morning sun from the south-east, raking through the south and east glass
 STATS = {n: {'verts': len(a.v), 'faces': len(a.f)} for n, a in LV.items()}
 print('LEVEL STATS', json.dumps(STATS))
 
