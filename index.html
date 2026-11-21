@@ -205,9 +205,9 @@ body.grabbing,body.grabbing *{cursor:grabbing!important}
   var cv=document.getElementById('contours'),x=cv.getContext('2d'),dp=Math.min(devicePixelRatio||1,2);cv.width=innerWidth*dp;cv.height=innerHeight*dp;x.scale(dp,dp);
   var s=7;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646}
   x.lineWidth=1.1;for(var k=0;k<7;k++){var cx=r()*innerWidth,cy=r()*innerHeight,R=80+r()*260,ph=r()*6;for(var j=0;j<4;j++){x.strokeStyle='rgba(120,88,64,'+(.14-j*.025)+')';x.beginPath();for(var a=0;a<=96;a++){var t=a/96*6.2832,rr=(R+j*22)*(1+.12*Math.sin(t*3+ph)+.07*Math.sin(t*5-ph*2));x[a?'lineTo':'moveTo'](cx+Math.cos(t)*rr*1.25,cy+Math.sin(t)*rr*.8)}x.closePath();x.stroke()}}
-  setTimeout(function(){if(!window.__frame&&!window.__fail){document.getElementById('loadMsg').textContent='Still loading the island…'}},12000);
+  setTimeout(function(){var e=document.getElementById('loadMsg');if(e&&!window.__frame&&!window.__fail){e.textContent='Still loading Malé…'}},12000);
 })();
 </script>
-<script type="module" src="js/main.js?v=1795260197"></script>
+<script type="module" src="js/main.js?v=1795260587"></script>
 </body>
 </html>

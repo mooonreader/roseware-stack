@@ -276,7 +276,7 @@ const frame = now => {
     p.beam.scale.set(alt * .0016, alt * .2, alt * .0016); p.P.y = sz * .5; });
   U.uCloudA.value = sstep(450, 1000, alt) * (1 - sstep(9000, 45000, alt)); clouds.visible = U.uCloudA.value > .01;
   const high = alt > 4000, vhigh = alt > 60000;
-  if (MALE) { const outside = (!inside || camP.y > -.5) && !(sl < 20 && camP.y < 3 && sf > 20); MALE.G.visible = outside && !vhigh; MALE.osm.visible = MALE.fill.visible = !high; const useRefl = outside && alt < 1600 && sf > 20; MALE.sea.visible = useRefl; MALE.flat.visible = outside && !useRefl && ocA < .99 && (sf > 20 || alt > 200); }
+  if (MALE) { const outside = (!inside || camP.y > -.5) && !(sl < 20 && camP.y < 3 && sf > 20); MALE.G.visible = outside && !vhigh; MALE.osm.visible = MALE.fill.visible = !high; const useRefl = outside && alt > 30 && alt < 1600 && sf > 20; MALE.sea.visible = useRefl; MALE.flat.visible = outside && !useRefl && ocA < .99 && (sf > 20 || alt > 200); }
   if (HQ) HQ.root.visible = !high; if (PEOPLE) PEOPLE.root.visible = !high;
   bloom.threshold = lerp(.92, 1.45, insideK);
   if (HQ) {
