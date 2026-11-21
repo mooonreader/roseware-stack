@@ -1,0 +1,24 @@
+name: Fetch Poly Haven models
+on:
+  push:
+    paths: ['tools/fetch_models.py', '.github/workflows/models.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install requests
+      - run: python tools/fetch_models.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase
+          git add assets/models
+          git commit -m "Update Poly Haven models" || echo "no changes"
+          git push
